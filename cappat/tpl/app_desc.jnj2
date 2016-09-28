@@ -1,0 +1,26 @@
+{
+  "name": "{{ app_name }}",
+  "version": "{{ version }}",
+  "helpURI": "{{ url }}",
+  "label": "{{ label }}",
+  "shortDescription": "{{ short_desc }}",
+  "longDescription": "{{ long_desc }}",
+  "executionSystem": "{{ execution_system or 'slurm-ls5.tacc.utexas.edu' }}",
+  "executionType": "{{ execution_type or 'HPC' }}",
+  "parallelism": "{{ parallelism or 'PARALLEL' }}",
+  "defaultQueue": "{{ queue or 'normal' }}",
+  "defaultNodeCount": {{ node_count or 1 }},
+  "defaultMaxRunTime": "{{ req_time or '04:00:00' }}",
+  "defaultMemoryPerNode": "{{ memory or '4GB' }}",
+  "deploymentPath": "{{ deployment_path or 'apps/' + app_name }}",
+  "deploymentSystem": "{{ deployment_system or 'openfmri-storage' }}",
+  "templatePath": "wrapper.sh",
+  "testPath": "test/test.sh",
+  "checkpointable": false,
+  {% if tags %}
+  "tags": [{% for t in tags %}"{{ t }}"{% if not loop.last %}, {% endif %}{% endfor %}],
+  {% endif %}
+  "modules": [{% for m in modules %}"{{ m }}"{% if not loop.last %}, {% endif %}{% endfor %}],
+  "inputs": [{% for i in inputs %}{{ i }}{% if not loop.last %}, {% endif %}{% endfor %}],
+  "parameters": [{% for p in parameters %}{{ p }}{% if not loop.last %}, {% endif %}{% endfor %}]
+}
