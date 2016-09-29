@@ -1,0 +1,13 @@
+#!/bin/bash
+#singularity.example
+#SBATCH --nodes={{nodes}}
+#SBATCH --time={{time}}
+#SBATCH --mincpus={{mincpus}}
+#SBATCH --mem-per-cpu={{mem_per_cpu}}
+#SBATCH --qos={{partition}}
+#SBATCH --partition={{partition}}
+#SBATCH --job-name={{job_name}}
+#SBATCH --output={{job_log}}.out
+#SBATCH --error={{job_log}}.err
+module load singularity
+srun {{commandline}}
