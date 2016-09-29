@@ -16,6 +16,6 @@ dependencies:
     - mkdir -p ~/docker; docker save slurm > ~/docker/image.tar
     - docker run -p 10022:22 -d slurm && sleep 10s
 
-script:
+test:
   override:
     - sshpass -p testuser ssh testuser@localhost sbatch /home/testuser/slurm.submit
