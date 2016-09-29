@@ -3,6 +3,12 @@ machine:
     - docker
 
 dependencies:
+  cache_directories:
+    - "~/docker"
+
   override:
     - docker info
+    - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
     - docker build --rm=false -t slurm slurm-docker/
+    - mkdir -p ~/docker; docker save slurm > ~/docker/image.tar
+    - docker run -p 10022:22 -d slurm
