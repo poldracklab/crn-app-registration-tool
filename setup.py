@@ -10,7 +10,6 @@ def main():
     from inspect import getfile, currentframe
     from setuptools import setup, find_packages
     from io import open  # pylint: disable=W0622
-    import numpy as np
 
     this_path = op.dirname(op.abspath(getfile(currentframe())))
 
