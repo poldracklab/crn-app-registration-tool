@@ -5,11 +5,13 @@ machine:
 dependencies:
   pre:
     - sudo apt-get update; sudo apt-get install sshpass
+    - pip install -r requirements.txt
 
   cache_directories:
     - "~/docker"
 
   override:
+    - pip install -e .[all]
     - docker info
     - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
     - docker build --rm=false -t slurm slurm-docker/
