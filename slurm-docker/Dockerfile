@@ -53,7 +53,8 @@ ADD slurm/slurm-child.submit /home/testuser/slurm-child.submit
 ADD slurm/slurm-parent.submit /home/testuser/slurm-parent.submit
 
 USER root
-RUN chown testuser:testuser /home/testuser/slurm.submit
+RUN chown testuser:testuser /home/testuser/slurm-child.submit
+RUN chown testuser:testuser /home/testuser/slurm-parent.submit
 ADD supervisord.conf /etc/supervisord.conf
 RUN mkdir /var/log/supervisor
 RUN chmod -R 777 /var/log/supervisor
