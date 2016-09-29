@@ -49,7 +49,8 @@ RUN chmod g+w /var/spool
 
 ADD slurm/slurm.conf /etc/sysconfig/slurm/slurm.conf
 USER testuser
-ADD slurm/slurm.submit /home/testuser/slurm.submit
+ADD slurm/slurm-child.submit /home/testuser/slurm-child.submit
+ADD slurm/slurm-parent.submit /home/testuser/slurm-parent.submit
 
 USER root
 RUN chown testuser:testuser /home/testuser/slurm.submit
