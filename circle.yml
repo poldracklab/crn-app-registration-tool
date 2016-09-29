@@ -3,6 +3,9 @@ machine:
     - docker
 
 dependencies:
+  pre:
+    - sudo apt-get update; sudo apt-get sshpass
+
   cache_directories:
     - "~/docker"
 
@@ -11,4 +14,8 @@ dependencies:
     - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
     - docker build --rm=false -t slurm slurm-docker/
     - mkdir -p ~/docker; docker save slurm > ~/docker/image.tar
-    - docker run -p 10022:22 -d slurm
+    - docker run -p 10022:22 -d slurm && sleep 10s
+
+script:
+  override:
+    - sshpass -p testuser ssh testuser@localhost sbatch /home/testuser/slurm.submit
