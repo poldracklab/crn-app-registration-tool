@@ -18,4 +18,4 @@ dependencies:
 
 test:
   override:
-    - sshpass -p testuser ssh -p 10022 testuser@localhost sbatch /home/testuser/slurm.submit && sleep 30s && sshpass -p testuser ssh -p 10022 testuser@localhost cat /home/testuser/slurmtest.out
+    - sshpass -p testuser ssh -p 10022 testuser@localhost sbatch /home/testuser/slurm.submit && sleep 30s && sshpass -p testuser ssh -p 10022 testuser@localhost cat /home/testuser/slurm-child.out
