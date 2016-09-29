@@ -1,0 +1,21 @@
+machine:
+  services:
+    - docker
+
+dependencies:
+  pre:
+    - sudo apt-get update; sudo apt-get install sshpass
+
+  cache_directories:
+    - "~/docker"
+
+  override:
+    - docker info
+    - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
+    - docker build --rm=false -t slurm slurm-docker/
+    - mkdir -p ~/docker; docker save slurm > ~/docker/image.tar
+    - docker run -p 10022:22 -d slurm && sleep 10s
+
+test:
+  override:
+    - sshpass -p testuser ssh -p 10022 testuser@localhost sbatch /home/testuser/slurm-parent.submit && sleep 30s && sshpass -p testuser ssh -p 10022 testuser@localhost cat /home/testuser/slurm-child.out

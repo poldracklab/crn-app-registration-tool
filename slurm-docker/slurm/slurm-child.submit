@@ -1,0 +1,12 @@
+#!/bin/bash
+#SBATCH -J slurm-child
+#SBATCH -o slurm-child.out
+#SBATCH -e slurm-child.err
+#SBATCH -t 0:30:00
+#SBATCH -p debug
+#SBATCH -n 1
+
+date
+hostname
+sleep 5
+date

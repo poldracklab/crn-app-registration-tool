@@ -1,0 +1,9 @@
+#!/bin/bash
+#SBATCH -J slurm-parent
+#SBATCH -o slurm-parent.out
+#SBATCH -e slurm-parent.err
+#SBATCH -t 0:30:00
+#SBATCH -p debug
+#SBATCH -n 1
+
+sbatch /home/testuser/slurm-child.submit
