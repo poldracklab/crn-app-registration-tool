@@ -10,6 +10,7 @@ from os import path as op
 from errno import EEXIST
 import socket
 from subprocess import check_output
+import re
 
 import pkg_resources as pkgr
 from cappat.tpl import Template
@@ -61,6 +62,7 @@ class TaskSubmissionBase(object):
             raise RuntimeError('a list of tasks is required')
 
         self.task_list = task_list
+        self.jobexp = re.compile(r'Submitted batch job (?P<jobid>\d*)')
 
         missing = list(set(self._get_mandatory_fields()) -
                        set(list(slurm_settings.keys())))
@@ -74,9 +76,28 @@ class TaskSubmissionBase(object):
         _check_folder(temp_folder)
         self.temp_folder = temp_folder
         self.sbatch_files = self._generate_sbatch()
-        self.job_ids = []
+        self._job_ids = []
+
+    @property
+    def job_ids(self):
+        return self._job_ids
+
+
+    def _parse_jobid(self, slurm_msg):
+        if isinstance(slurm_msg, (list, tuple)):
+            slurm_msg = '\n'.join(slurm_msg)
+
+        jobid = self.jobexp.search(slurm_msg).group('jobid')
+        if jobid:
+            self._job_ids.append(jobid)
+        else:
+            raise RuntimeError('Job ID could not extracted. Slurm message:\n{}'.format(
+                slurm_msg))
 
     def _generate_sbatch(self):
+        raise NotImplementedError
+
+    def _submit_sbatch(self, task):
         raise NotImplementedError
 
     def _get_mandatory_fields(self):
@@ -86,7 +107,11 @@ class TaskSubmissionBase(object):
         """
         Submits a list of sbatch files and returns the assigned job ids
         """
-        raise NotImplementedError
+        for task in self.sbatch_files:
+            # run sbatch
+            sresult = self._submit_sbatch(task)
+            # parse output and get job id
+            self._parse_jobid(sresult)
 
     def children_yield(self):
         """
@@ -123,41 +148,32 @@ class SherlockSubmission(TaskSubmissionBase):
             conf.generate_conf(slurm_settings, sbatch_files[-1])
         return sbatch_files
 
-    def submit(self):
-        """
-        Submits a list of sbatch files and returns the assigned job ids
-        """
-        for slurm_job in self.sbatch_files:
-            # run sbatch
-            slurm_result = check_output(['sbatch', slurm_job])
-            # parse output and get job id
+    def _submit_sbatch(self, task):
+        return check_output(['sbatch', task])
+
 
 class CircleCISubmission(SherlockSubmission):
+    """
+    A CircleCI submission manager to work with the slurm docker image
+    """
     def _generate_sbatch(self):
         """
         Generates one sbatch file per task
         """
+        # Remove default settings of Sherlock not supported
         self.slurm_settings.pop('qos', None)
         self.slurm_settings.pop('mincpus', None)
         self.slurm_settings.pop('mem_per_cpu', None)
         self.slurm_settings.pop('modules', None)
         return super(CircleCISubmission, self)._generate_sbatch()
 
-    def submit(self):
-        """
-        Submits a list of sbatch files and returns the assigned job ids
-        """
-        for i, slurm_job in enumerate(self.sbatch_files):
-            # run sbatch
-            slurm_job = os.path.basename(slurm_job)
-            slurm_result = check_output([
-                'sshpass', '-p', 'testuser',
-                'ssh', '-p', '10022', 'testuser@localhost',
-                'sbatch', os.path.join('/scratch/slurm', slurm_job)])
-            # parse output and get job id
-            with open('/scratch/slurm/slurm-output%04d.txt' % i, 'w') as sfile:
-                sfile.write(slurm_result)
-            print slurm_result
+    def _submit_sbatch(self, task):
+        task = os.path.basename(task)
+        return check_output([
+            'sshpass', '-p', 'testuser',
+            'ssh', '-p', '10022', 'testuser@localhost',
+            'sbatch', os.path.join('/scratch/slurm', task)])
+
 
 def _gethostname():
     hostname = socket.gethostname()

@@ -32,3 +32,4 @@ def test_job_creation():
     slurm = cj.TaskManager.build(tasks, JOB_SETTINGS,
                                  temp_folder=os.path.expanduser('~/scratch/slurm'))
     slurm.submit()
+    assert len(slurm.job_ids) == 1
