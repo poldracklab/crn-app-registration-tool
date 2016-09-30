@@ -103,6 +103,7 @@ class SherlockSubmission(TaskSubmissionBase):
         def_settings = SHERLOCK_SBATCH_DEFAULTS.copy()
         if not slurm_settings is None:
             def_settings.update(slurm_settings)
+        def_settings['qos'] = def_settings['partition']
         super(SherlockSubmission, self).__init__(
             task_list, def_settings, temp_folder)
 
@@ -132,6 +133,14 @@ class SherlockSubmission(TaskSubmissionBase):
             # parse output and get job id
 
 class CircleCISubmission(SherlockSubmission):
+    def _generate_sbatch(self):
+        """
+        Generates one sbatch file per task
+        """
+        self.slurm_settings.pop('qos', None)
+        self.slurm_settings.pop('modules', None)
+        super(CircleCISubmission, self)._generate_sbatch()
+
     def submit(self):
         """
         Submits a list of sbatch files and returns the assigned job ids
