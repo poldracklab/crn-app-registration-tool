@@ -207,8 +207,8 @@ class CircleCISubmission(SherlockSubmission):
         return super(CircleCISubmission, self)._generate_sbatch()
 
     def _submit_sbatch(self, task):
-        task = task.replace('~/', '/')
         task = task.replace(os.path.expanduser('~/'), '/')
+        task = task.replace('~/', '/')
 
         return check_output([
             'sshpass', '-p', 'testuser',
