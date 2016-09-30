@@ -20,6 +20,7 @@ def check_folder(folder):
         except OSError as exc:
             if not exc.errno == EEXIST:
                 raise
+    return folder
 
 
 def gethostname():

@@ -12,8 +12,6 @@ from argparse import ArgumentParser, RawTextHelpFormatter
 from textwrap import dedent
 
 from cappat import __version__, logger, logging
-from cappat.utils import check_folder
-
 wlogger = logging.getLogger('bidsapp.wrapper')
 
 
@@ -73,7 +71,15 @@ def get_task_list(bids_dir, app_name, subject_list, group_size=1, *args):
 
 
 def run_wrapper(args):
+    """
+    """
     import cappat.jobs as cj
+    from cappat.utils import check_folder
+    # Ensure folders exist
+    check_folder(op.abspath(args.output_dir))
+    log_dir = check_folder(op.abspath(args.log_dir))
+    logger.addHandler(logging.FileHandler(op.join(log_dir, 'logfile.txt')))
+
     # Generate subjects list
     subject_list = get_subject_list(args.bids_dir,
                                     args.participant_label,
@@ -127,13 +133,10 @@ def main():
                         help='do not randomize participants list before grouping')
     parser.add_argument('--bids-app-name', required=True, action='store',
                         help='BIDS app to call')
+    parser.add_argument('--log-dir', default='logs/', action='store',
+                        help='points to a folder where logs should be stored')
     parser.add_argument('--args', default='', action='store', help='append arguments')
     run_wrapper(parser.parse_args())
-
-    check_folder(op.abspath('logs/'))
-    logger.addHandler(logging.FileHandler(op.abspath('logs/logfile.txt')))
-
-
 
 if __name__ == '__main__':
     main()
