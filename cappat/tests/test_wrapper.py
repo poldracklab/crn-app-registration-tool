@@ -13,6 +13,10 @@ class SetUp:
         self._path = os.getenv('DS030_PATH')
         if self._path is None:
             raise RuntimeError('$DS030_PATH is not defined')
+
+        if self._path.startswith('~'):
+            self._path = os.path.expanduser(self._path)
+
         self._subject_list = sorted([
             os.path.basename(sub)[4:]
             for sub in glob(os.path.join(self._path, 'sub-*'))
