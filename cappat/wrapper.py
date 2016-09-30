@@ -11,7 +11,10 @@ from random import shuffle
 from argparse import ArgumentParser, RawTextHelpFormatter
 from textwrap import dedent
 
-from cappat import __version__
+from cappat import __version__, logger, logging
+
+wlogger = logging.getLogger('bidsapp.wrapper')
+logger.addHandler(logging.FileHandler(op.abspath('logs/logfile.txt')))
 
 
 def get_subject_list(bids_dir, participant_label=None, no_randomize=False):
@@ -45,6 +48,7 @@ def get_subject_list(bids_dir, participant_label=None, no_randomize=False):
     if not no_randomize:
         shuffle(subject_list)
 
+    wlogger.info('Subject list: %s', ' '.join(subject_list))
     return subject_list
 
 
@@ -63,6 +67,8 @@ def get_task_list(bids_dir, app_name, subject_list, group_size=1, *args):
             '{0} {1} {2} participant --participant_label {3} {4} {6} {5}'.format(
             app_name, bids_dir, output_dir, ' '.join(part_group),
             '-w work/sjob-{:04d}'.format(i), log_arg(i), ' '.join(args)))
+
+    wlogger.info('Task list: \n\t%s', '\n\t'.join(subject_list))
     return task_list
 
 

@@ -15,10 +15,13 @@ from time import sleep
 
 import pkg_resources as pkgr
 from cappat.tpl import Template
+from cappat import logging
 
 SLURM_FAIL_STATUS = ['CA', 'F', 'TO', 'NF', 'SE']
 SLURM_WAIT_STATUS = ['R', 'PD', 'CF', 'CG']
 SLEEP_SECONDS = 5
+
+JOB_LOG = logging.getLogger('bidsapp.taskmanager')
 
 class TaskManager:
     """
@@ -30,6 +33,7 @@ class TaskManager:
         Get the appropriate TaskManager object
         """
         hostname = _gethostname()
+        JOB_LOG.info('Identified host: "%s"', hostname)
 
         if not hostname:
             raise RuntimeError('Could not identify execution system')
@@ -74,6 +78,8 @@ class TaskSubmissionBase(object):
         self.temp_folder = temp_folder
         self.sbatch_files = self._generate_sbatch()
         self._job_ids = []
+
+        JOB_LOG.info('Created TaskManager type "%s"', self.__class__.__name__)
 
     @property
     def job_ids(self):
@@ -126,8 +132,11 @@ class TaskSubmissionBase(object):
                 if status in SLURM_WAIT_STATUS:
                     continue
                 else:
+                    JOB_LOG.info('Job %s finished.', jobid)
                     finished_jobs[i] = True
 
+            pending = [jid for jid, jdone in zip(self._job_ids, finished_jobs) if not jdone]
+            JOB_LOG.info('There are pending jobs: %s', ' '.join(pending))
             sleep(SLEEP_SECONDS)
 
         return self._job_ids

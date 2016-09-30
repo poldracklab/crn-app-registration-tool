@@ -16,7 +16,7 @@ dependencies:
     - mkdir -p ~/data; if [[ ! -d ~/data/ds003_downsampled ]]; then wget -q --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -O ds003_downsampled.tar.gz "${DS003_URL}" && tar xzf ds003_downsampled.tar.gz -C ~/data/; fi
     - sudo apt-get -y update; sudo apt-get -y install sshpass
     - pip install -r requirements.txt
-    - mkdir -p ~/scratch ~/scratch/slurm
+    - mkdir -p ~/scratch ~/scratch/slurm ~/scratch/testwrapper
 
   override:
     - pip install -e .[all]
@@ -29,7 +29,7 @@ dependencies:
 test:
   override:
     - py.test -rw -vv
-    - agave_wrapper ~/data/ds003_downsampled out/ --group-size 5 --bids-app-name testapp
+    - cd ~/scratch/testwrapper; agave_wrapper ~/data/ds003_downsampled out/ --group-size 5 --bids-app-name testapp
     - sshpass -p testuser ssh -p 10022 testuser@localhost sbatch /home/testuser/slurm-parent.submit && sleep 30s && sshpass -p testuser ssh -p 10022 testuser@localhost cat /home/testuser/slurm-child.out
 
 
