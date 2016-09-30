@@ -32,7 +32,7 @@ class TaskManager:
     A task manager factory class
     """
     @staticmethod
-    def build(task_list, slurm_settings, temp_folder=None):
+    def build(task_list, slurm_settings=None, temp_folder=None):
         """
         Get the appropriate TaskManager object
         """
@@ -55,7 +55,7 @@ class TaskManager:
 
 
 class TaskSubmissionBase(object):
-    def __init__(self, task_list, slurm_settings, temp_folder=None):
+    def __init__(self, task_list, slurm_settings=None, temp_folder=None):
 
         if not task_list:
             raise RuntimeError('a list of tasks is required')
@@ -99,6 +99,13 @@ class SherlockSubmission(TaskSubmissionBase):
     """
     The Sherlock submission
     """
+    def __init__(self, task_list, slurm_settings=None, temp_folder=None):
+        def_settings = SHERLOCK_SBATCH_DEFAULTS.copy()
+        if not slurm_settings is None:
+            def_settings.update(slurm_settings)
+        super(SherlockSubmission, self).__init__(
+            task_list, def_settings, temp_folder)
+
     def _get_mandatory_fields(self):
         return list(SHERLOCK_SBATCH_DEFAULTS.keys())
 

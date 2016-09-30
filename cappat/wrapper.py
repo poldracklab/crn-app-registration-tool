@@ -24,8 +24,10 @@ def get_subject_list(bids_dir, participant_label=None, no_randomize=False):
     all_subjects = sorted([op.basename(subj)[4:] for subj in glob(op.join(bids_dir, 'sub-*'))])
 
     if participant_label is None:
-        participant_label = ''
-    participant_label = [s for s in participant_label.strip().split(' ') if s]
+        participant_label = []
+
+    if isinstance(participant_label, (str, basestring)):
+        participant_label = [s for s in participant_label.strip().split(' ') if s]
 
     if not participant_label:
         subject_list = all_subjects
@@ -64,6 +66,21 @@ def get_task_list(bids_dir, app_name, subject_list, group_size=1, *args):
     return task_list
 
 
+def run_wrapper(args):
+    import cappat.jobs as cj
+    # Generate subjects list
+    subject_list = get_subject_list(args.bids_dir,
+                                    args.participant_label,
+                                    no_randomize=args.no_randomize)
+
+    # Parse job parameters (slurm_settings)
+
+    # Generate tasks
+    task_list = get_task_list(
+        args.bids_dir, args.bids_app_name, subject_list, group_size=args.group_size)
+    tasks = cj.TaskManager.build(task_list)
+
+
 def main():
     """Entry point"""
     parser = ArgumentParser(formatter_class=RawTextHelpFormatter, description=dedent(
@@ -74,7 +91,7 @@ def main():
 '''))
 
     parser.add_argument('-v', '--version', action='version',
-                        version='mriqc v{}'.format(__version__))
+                        version='BIDS-Apps wrapper v{}'.format(__version__))
 
     parser.add_argument('bids_dir', action='store',
                         help='The directory with the input dataset '
@@ -95,14 +112,10 @@ def main():
                         help='parallelize participants in groups')
     parser.add_argument('--no-randomize', default=False, action='store_true',
                         help='do not randomize participants list before grouping')
-    parser.add_argument('--log-groups', default=False, action='store_true',
-                        help='append logging output')
-    parser.add_argument('--bids-app-name', default='mriqc', action='store',
+    parser.add_argument('--bids-app-name', required=True, action='store',
                         help='BIDS app to call')
     parser.add_argument('--args', default='', action='store', help='append arguments')
-
-    args = parser.parse_args()
-
+    run_wrapper(parser.parse_args())
 
 
 if __name__ == '__main__':
