@@ -15,8 +15,16 @@ import pkg_resources as pkgr
 from cappat.tpl import Template
 
 SHERLOCK_SBATCH_TEMPLATE = pkgr.resource_filename('cappat.tpl', 'sherlock-sbatch.jnj2')
-SHERLOCK_SBATCH_FIELDS = ['nodes', 'time', 'mincpus', 'mem_per_cpu', 'partition', 'morules',
-                          'job_name', 'job_log']
+SHERLOCK_SBATCH_DEFAULTS = {
+    'nodes': 1,
+    'time': '01:00:00',
+    'mincpus': 4,
+    'mem_per_cpu': 8000,
+    'modules': ['load singularity'],
+    'partition': 'russpold',
+    'job_name': 'crn-bidsapp',
+    'job_log': 'logs/crn-bidsapp'
+}
 
 
 class TaskManager:
@@ -92,7 +100,7 @@ class SherlockSubmission(TaskSubmissionBase):
     The Sherlock submission
     """
     def _get_mandatory_fields(self):
-        return SHERLOCK_SBATCH_FIELDS
+        return list(SHERLOCK_SBATCH_DEFAULTS.keys())
 
     def _generate_sbatch(self):
         """
@@ -121,7 +129,7 @@ class CircleCISubmission(SherlockSubmission):
         """
         Submits a list of sbatch files and returns the assigned job ids
         """
-        for slurm_job in self.sbatch_files:
+        for i, slurm_job in enumerate(self.sbatch_files):
             # run sbatch
             slurm_job = os.path.basename(slurm_job)
             slurm_result = check_output([
@@ -129,6 +137,8 @@ class CircleCISubmission(SherlockSubmission):
                 'ssh' '-p', '10022', 'testuser@localhost',
                 'sbatch', os.path.join('/scratch/slurm', slurm_job)])
             # parse output and get job id
+            with open('/scratch/slurm/slurm-output%04d.txt' % i, 'w') as sfile:
+                sfile.write(slurm_result)
             print slurm_result
 
 def _gethostname():
