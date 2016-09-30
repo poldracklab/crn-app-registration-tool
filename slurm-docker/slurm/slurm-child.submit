@@ -6,7 +6,4 @@
 #SBATCH -p debug
 #SBATCH -n 1
 
-date
-hostname
-sleep 5
-date
+testapp
