@@ -10,9 +10,9 @@ from cappat import wrapper as cw
 
 class SetUp:
     def __init__(self):
-        self._path = os.getenv('DS030_PATH')
+        self._path = os.getenv('DS003_PATH')
         if self._path is None:
-            raise RuntimeError('$DS030_PATH is not defined')
+            raise RuntimeError('$DS003_PATH is not defined')
 
         if self._path.startswith('~'):
             self._path = os.path.expanduser(self._path)
