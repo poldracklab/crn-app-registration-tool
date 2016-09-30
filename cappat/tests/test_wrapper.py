@@ -50,3 +50,15 @@ def test_get_subject_list_part(data, participant_label, no_random, expected):
                                    participant_label,
                                    no_randomize=no_random)
     assert  len(set(expected) - set(sub_list)) == 0
+
+
+@pytest.mark.parametrize("group_size,expected", [
+    (3, ['mriqc ~/Data ' + os.getcwd() + '/out participant --participant_label 10 11 12 -w work/sjob-0000  >> log/sjob-0000.log']),
+    (2, ['mriqc ~/Data ' + os.getcwd() + '/out participant --participant_label 10 11 -w work/sjob-0000  >> log/sjob-0000.log',
+         'mriqc ~/Data ' + os.getcwd() + '/out participant --participant_label 12 -w work/sjob-0001  >> log/sjob-0001.log']),
+    (1, ['mriqc ~/Data ' + os.getcwd() + '/out participant --participant_label 10 -w work/sjob-0000  >> log/sjob-0000.log',
+         'mriqc ~/Data ' + os.getcwd() + '/out participant --participant_label 11 -w work/sjob-0001  >> log/sjob-0001.log',
+         'mriqc ~/Data ' + os.getcwd() + '/out participant --participant_label 12 -w work/sjob-0002  >> log/sjob-0002.log'])
+])
+def test_get_task_list(group_size, expected):
+    assert cw.get_task_list('~/Data', 'mriqc', ['10', '11', '12'], group_size=group_size) == expected

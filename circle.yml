@@ -25,5 +25,5 @@ dependencies:
 
 test:
   override:
-    - py.test -rw
+    - py.test -rw -vv
     - sshpass -p testuser ssh -p 10022 testuser@localhost sbatch /home/testuser/slurm-parent.submit && sleep 30s && sshpass -p testuser ssh -p 10022 testuser@localhost cat /home/testuser/slurm-child.out
