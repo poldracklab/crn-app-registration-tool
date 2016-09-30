@@ -5,6 +5,7 @@
 
 import os
 from glob import glob
+import mock
 import pytest
 from cappat import jobs as cj
 
@@ -18,8 +19,14 @@ JOB_SETTINGS = {
     'job_log': '/scratch/testjob'
 }
 
+def fake_hostname():
+    return 'circleci.test.host'
+
+#@mock.patch('cappat.jobs._gethostname', side_effect=fake_hostname)
+#@mock.patch('cappat.jobs._gethostname')
 def test_job_creation():
     tasks = ['testapp ~/Data out/ participant --participant_label '
              '10 11 12 -w work/sjob-0000  >> log/sjob-0000.log']
+
     slurm = cj.TaskManager.build(tasks, JOB_SETTINGS,
                                  temp_folder=os.path.expanduser('~/scratch/slurm'))

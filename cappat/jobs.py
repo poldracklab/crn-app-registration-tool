@@ -8,45 +8,42 @@ Utilities: Agave wrapper for sherlock
 import os
 from os import path as op
 from errno import EEXIST
+import socket
+from subprocess import check_output
+
 import pkg_resources as pkgr
 from cappat.tpl import Template
-from subprocess import check_output
 
 SHERLOCK_SBATCH_TEMPLATE = pkgr.resource_filename('cappat.tpl', 'sherlock-sbatch.jnj2')
 SHERLOCK_SBATCH_FIELDS = ['nodes', 'time', 'mincpus', 'mem_per_cpu', 'partition',
                           'job_name', 'job_log']
 
 
-class TaskManager(object):
+class TaskManager:
+    """
+    A task manager factory class
+    """
+    @staticmethod
     def build(task_list, slurm_settings, temp_folder=None):
         """
         Get the appropriate TaskManager object
         """
-        import socket
-        hostname = socket.gethostname()
-
-        if len(hostname.strip('.')) == 1 and hostname.startswith('login'):
-            fqdns = list(
-                set([socket.getfqdn(i[4][0])
-                     for i in socket.getaddrinfo(socket.gethostname(), None)]))
-            hostname = fqdns[0]
+        hostname = _gethostname()
 
         if not hostname:
             raise RuntimeError('Could not identify execution system')
 
         if hostname.endswith('ls5.tacc.utexas.edu'):
-            return 'ls5'
+            raise NotImplementedError
         elif hostname.endswith('stanford.edu'):
             return SherlockSubmission(task_list, slurm_settings, temp_folder)
         elif hostname.endswith('stampede.tacc.utexas.edu'):
-            return 'stampede'
-        elif hostname.endswith('.localdomain'):
+            raise NotImplementedError
+        elif hostname.startswith('box') and hostname.endswith('.localdomain'):
             return CircleCISubmission(task_list, slurm_settings, temp_folder)
         else:
-            raise RuntimeError('Could not identify {} as execution system'.format(
-                hostname))
-
-        build = staticmethod(build)
+            raise RuntimeError(
+                'Could not identify "{}" as a valid execution system'.format(hostname))
 
 
 class TaskSubmissionBase(object):
@@ -134,6 +131,16 @@ class CircleCISubmission(SherlockSubmission):
             # parse output and get job id
             print slurm_result
 
+def _gethostname():
+    hostname = socket.gethostname()
+
+    if len(hostname.strip('.')) == 1 and hostname.startswith('login'):
+        # This is here because ls5 returns only the login node name 'loginN'
+        fqdns = list(
+            set([socket.getfqdn(i[4][0])
+                 for i in socket.getaddrinfo(socket.gethostname(), None)]))
+        hostname = fqdns[0]
+    return hostname
 
 def _check_folder(folder):
     if not op.exists(folder):
