@@ -10,9 +10,12 @@ from glob import glob
 from random import shuffle
 from argparse import ArgumentParser, RawTextHelpFormatter
 from textwrap import dedent
+import logging
 
-from cappat import __version__, logger, logging
-wlogger = logging.getLogger('bidsapp.wrapper')
+from cappat import __version__
+
+
+wlogger = logging.getLogger('wrapper')
 
 
 def get_subject_list(bids_dir, participant_label=None, no_randomize=False):
@@ -78,7 +81,8 @@ def run_wrapper(args):
     # Ensure folders exist
     check_folder(op.abspath(args.output_dir))
     log_dir = check_folder(op.abspath(args.log_dir))
-    logger.addHandler(logging.FileHandler(op.join(log_dir, 'logfile.txt')))
+    logging.basicConfig(filename=op.join(log_dir, 'logfile.txt'),
+                        level=logging.INFO)
 
     # Generate subjects list
     subject_list = get_subject_list(args.bids_dir,

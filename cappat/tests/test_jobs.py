@@ -5,7 +5,7 @@
 
 import os
 from glob import glob
-# import mock
+import mock
 # import pytest
 from cappat import jobs as cj
 
@@ -25,6 +25,8 @@ def fake_hostname():
 
 #@mock.patch('cappat.jobs._gethostname', side_effect=fake_hostname)
 #@mock.patch('cappat.jobs._gethostname')
+
+@mock.patch('cappat.utils.gethostname', return_value='circleci.test.host')
 def test_job_creation():
     tasks = ['testapp ~/Data out/ participant --participant_label '
              '10 11 12 -w work/sjob-0000  >> log/sjob-0000.log']

@@ -7,15 +7,14 @@ Utilities: Agave wrapper for sherlock
 """
 import os
 from os import path as op
-import socket
 from subprocess import check_output
 import re
 from time import sleep
+import logging
 
 import pkg_resources as pkgr
 from cappat.tpl import Template
 from cappat.utils import check_folder, gethostname
-from cappat import logging
 
 SLURM_FAIL_STATUS = ['CA', 'F', 'TO', 'NF', 'SE']
 SLURM_WAIT_STATUS = ['R', 'PD', 'CF', 'CG']
@@ -33,6 +32,7 @@ class TaskManager:
         Get the appropriate TaskManager object
         """
         hostname = gethostname()
+
         JOB_LOG.info('Identified host: "%s"', hostname)
 
         if not hostname:
@@ -73,9 +73,9 @@ class TaskSubmissionBase(object):
             self.slurm_settings.update(slurm_settings)
 
         if temp_folder is None:
-            temp_folder = op.join(os.getcwd(), 'log')
-        check_folder(temp_folder)
-        self.temp_folder = temp_folder
+            temp_folder = 'log/'
+
+        self.temp_folder = check_folder(op.abspath(temp_folder))
         self.sbatch_files = self._generate_sbatch()
         self._job_ids = []
 
@@ -202,11 +202,13 @@ class CircleCISubmission(SherlockSubmission):
         return super(CircleCISubmission, self)._generate_sbatch()
 
     def _submit_sbatch(self, task):
-        task = os.path.basename(task)
+        task = task.replace('~/', '/')
+        task = task.replace(os.path.expanduser('~/'), '/')
+
         return check_output([
             'sshpass', '-p', 'testuser',
             'ssh', '-p', '10022', 'testuser@localhost',
-            'sbatch', os.path.join('/scratch/slurm', task)])
+            'sbatch', task])
 
     def _get_job_status(self, jobid):
         return check_output([

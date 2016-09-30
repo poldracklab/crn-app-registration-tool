@@ -22,7 +22,3 @@ from .info import (
     __description__,
     __longdesc__
 )
-
-import logging
-logger = logging.getLogger('bidsapp')
-logger.setLevel(logging.DEBUG)

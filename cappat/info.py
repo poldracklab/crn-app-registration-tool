@@ -53,6 +53,7 @@ LINKS_REQUIRES = []
 # Dependencies to install for testing (e.g. nose or pytest)
 TESTS_REQUIRES = [
     'pytest-xdist',
+    'mock'
 ]
 
 # Dependencies to install for extra features
