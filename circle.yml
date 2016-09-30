@@ -1,14 +1,19 @@
 machine:
+  environment:
+    DS030_URL: 'https://osf.io/wqcdg/?action=download&version=1'
+    DS030_PATH: ~/data/ds003_downsampled
   services:
     - docker
 
 dependencies:
   pre:
+    - mkdir -p ~/data; if [[ ! -d ${DS030_PATH} ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O ds003_downsampled.tar.gz ${DS030_URL} && tar xzf ds003_downsampled.tar.gz -C ~/data/; fi
     - sudo apt-get update; sudo apt-get install sshpass
     - pip install -r requirements.txt
 
   cache_directories:
     - "~/docker"
+    - "~/data"
 
   override:
     - pip install -e .[all]
@@ -20,4 +25,5 @@ dependencies:
 
 test:
   override:
+    - py.test -rw
     - sshpass -p testuser ssh -p 10022 testuser@localhost sbatch /home/testuser/slurm-parent.submit && sleep 30s && sshpass -p testuser ssh -p 10022 testuser@localhost cat /home/testuser/slurm-child.out

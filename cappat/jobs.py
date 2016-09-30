@@ -10,6 +10,7 @@ from os import path as op
 from errno import EEXIST
 import pkg_resources as pkgr
 from cappat.tpl import Template
+from subprocess import check_output
 
 SHERLOCK_SBATCH_TEMPLATE = pkgr.resource_filename('cappat.tpl', 'sherlock-sbatch.jnj2')
 SHERLOCK_SBATCH_FIELDS = ['nodes', 'time', 'mincpus', 'mem_per_cpu', 'partition',
@@ -35,7 +36,7 @@ class TaskSubmission(object):
             temp_folder = op.join(os.getcwd(), 'log')
         _check_folder(temp_folder)
         self.temp_folder = temp_folder
-        self.batch_files = self._generate_sbatch()
+        self.sbatch_files = self._generate_sbatch()
         self.job_ids = []
 
     def _generate_sbatch(self):
@@ -48,10 +49,7 @@ class TaskSubmission(object):
         """
         Submits a list of sbatch files and returns the assigned job ids
         """
-        for slurm_job in self.sbatch_files:
-            # run sbatch
-            pass
-            # parse output and get job id
+        raise NotImplementedError
 
     def children_yield(self):
         """
@@ -79,6 +77,16 @@ class SherlockSubmission(TaskSubmission):
             conf = Template(SHERLOCK_SBATCH_TEMPLATE)
             conf.generate_conf(slurm_settings, sbatch_files[-1])
         return sbatch_files
+
+    def submit(self):
+        """
+        Submits a list of sbatch files and returns the assigned job ids
+        """
+        for slurm_job in self.sbatch_files:
+            # run sbatch
+            slurm_result = check_output(['sbatch', slurm_job])
+            # parse output and get job id
+
 
 
 def _check_folder(folder):

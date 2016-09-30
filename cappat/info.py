@@ -51,13 +51,15 @@ SETUP_REQUIRES = []
 LINKS_REQUIRES = []
 
 # Dependencies to install for testing (e.g. nose or pytest)
-TESTS_REQUIRES = []
+TESTS_REQUIRES = [
+    'pytest-xdist',
+]
 
 # Dependencies to install for extra features
 # For now, only documentation is enabled. Install with pip install -e .[doc]
 EXTRA_REQUIRES = {
     'doc': ['sphinx'],
-    # 'tests': TESTS_REQUIRES,
+    'tests': TESTS_REQUIRES,
 }
 
 # Enable a handle to install all extra dependencies at once

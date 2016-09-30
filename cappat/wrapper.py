@@ -14,22 +14,31 @@ from textwrap import dedent
 from cappat import __version__
 
 
-def get_subject_list(bids_dir, participant_label, no_randomize=False):
-        # Build settings dict
+def get_subject_list(bids_dir, participant_label=None, no_randomize=False):
+    """
+    Returns a the list of subjects to be processed
+
+    """
+    # Build settings dict
     bids_dir = op.abspath(bids_dir)
     all_subjects = sorted([op.basename(subj)[4:] for subj in glob(op.join(bids_dir, 'sub-*'))])
 
-    subject_list = participant_label.strip().split(' ')
+    if participant_label is None:
+        participant_label = ''
+    participant_label = [s for s in participant_label.strip().split(' ') if s]
 
-    # remove sub- prefix, get unique
-    for i, subj in enumerate(subject_list):
-        subject_list[i] = subj[4:] if subj.startswith('sub-') else subj
-    subject_list = sorted(list(set(subject_list)))
+    if not participant_label:
+        subject_list = all_subjects
+    else:
+        # remove sub- prefix, get unique
+        subject_list = [subj[4:] if subj.startswith('sub-') else subj
+                        for subj in participant_label]
+        subject_list = sorted(list(set(subject_list)))
 
-    if list(set(subject_list) - set(all_subjects)):
-        non_exist = list(set(subject_list) - set(all_subjects))
-        raise RuntimeError('Participant label(s) not found in the '
-                           'BIDS root directory: {}'.format(' '.join(non_exist)))
+        if list(set(subject_list) - set(all_subjects)):
+            non_exist = list(set(subject_list) - set(all_subjects))
+            raise RuntimeError('Participant label(s) not found in the '
+                               'BIDS root directory: {}'.format(' '.join(non_exist)))
 
     if not no_randomize:
         shuffle(subject_list)
