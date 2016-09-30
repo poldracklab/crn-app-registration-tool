@@ -7,7 +7,7 @@ machine:
 
 dependencies:
   pre:
-    - mkdir -p ~/data; if [[ ! -d ${DS003_PATH} ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O ds003_downsampled.tar.gz "${DS003_URL}" && tar xzf ds003_downsampled.tar.gz -C ~/data/; fi
+    - mkdir -p ~/data; if [[ ! -d ${DS003_PATH} ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -O ds003_downsampled.tar.gz "${DS003_URL}" && tar xzf ds003_downsampled.tar.gz -C ~/data/; fi
     - ls ${DS003_PATH}
     - sudo apt-get update; sudo apt-get install sshpass
     - pip install -r requirements.txt
