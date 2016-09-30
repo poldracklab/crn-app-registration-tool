@@ -6,15 +6,17 @@ machine:
     - docker
 
 dependencies:
+  cache_directories:
+    - "~/docker"
+    - "~/data"
+    - "~/.apt-cache"
   pre:
+    # Let CircleCI cache the apt archive
+    - mkdir -p ~/.apt-cache/partial && sudo rm -rf /var/cache/apt/archives && sudo ln -s ~/.apt-cache /var/cache/apt/archives
     - mkdir -p ~/data; if [[ ! -d ~/data/ds003_downsampled ]]; then wget -q --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -O ds003_downsampled.tar.gz "${DS003_URL}" && tar xzf ds003_downsampled.tar.gz -C ~/data/; fi
     - sudo apt-get update; sudo apt-get install sshpass
     - pip install -r requirements.txt
     - mkdir -p ~/scratch ~/scratch/slurm
-
-  cache_directories:
-    - "~/docker"
-    - "~/data"
 
   override:
     - pip install -e .[all]
