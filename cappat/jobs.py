@@ -15,7 +15,7 @@ import pkg_resources as pkgr
 from cappat.tpl import Template
 
 SHERLOCK_SBATCH_TEMPLATE = pkgr.resource_filename('cappat.tpl', 'sherlock-sbatch.jnj2')
-SHERLOCK_SBATCH_FIELDS = ['nodes', 'time', 'mincpus', 'mem_per_cpu', 'partition',
+SHERLOCK_SBATCH_FIELDS = ['nodes', 'time', 'mincpus', 'mem_per_cpu', 'partition', 'morules',
                           'job_name', 'job_log']
 
 
