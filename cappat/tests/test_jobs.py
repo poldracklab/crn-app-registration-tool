@@ -33,3 +33,12 @@ def test_job_creation():
                                  temp_folder=os.path.expanduser('~/scratch/slurm'))
     slurm.submit()
     assert len(slurm.job_ids) == 1
+
+def test_job_run():
+    tasks = ['testapp ~/Data out/ participant --participant_label '
+             '10 11 12 -w work/sjob-0000  >> log/sjob-0000.log']
+
+    slurm = cj.TaskManager.build(tasks, JOB_SETTINGS,
+                                 temp_folder=os.path.expanduser('~/scratch/slurm'))
+    slurm.submit()
+    assert len(slurm.children_yield()) == 1

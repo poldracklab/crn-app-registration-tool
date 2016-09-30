@@ -11,22 +11,14 @@ from errno import EEXIST
 import socket
 from subprocess import check_output
 import re
+from time import sleep
 
 import pkg_resources as pkgr
 from cappat.tpl import Template
 
-SHERLOCK_SBATCH_TEMPLATE = pkgr.resource_filename('cappat.tpl', 'sherlock-sbatch.jnj2')
-SHERLOCK_SBATCH_DEFAULTS = {
-    'nodes': 1,
-    'time': '01:00:00',
-    'mincpus': 4,
-    'mem_per_cpu': 8000,
-    'modules': ['load singularity'],
-    'partition': 'russpold',
-    'job_name': 'crn-bidsapp',
-    'job_log': 'crn-bidsapp.log'
-}
-
+SLURM_FAIL_STATUS = ['CA', 'F', 'TO', 'NF', 'SE']
+SLURM_WAIT_STATUS = ['R', 'PD', 'CF', 'CG']
+SLEEP_SECONDS = 5
 
 class TaskManager:
     """
@@ -56,20 +48,25 @@ class TaskManager:
 
 
 class TaskSubmissionBase(object):
+    slurm_settings = {
+        'nodes': 1,
+        'time': '01:00:00',
+        'job_name': 'crn-bidsapp',
+        'job_log': 'crn-bidsapp.log'
+    }
+    jobexp = re.compile(r'Submitted batch job (?P<jobid>\d*)')
+
+    SLURM_TEMPLATE = pkgr.resource_filename('cappat.tpl', 'sherlock-sbatch.jnj2')
+
     def __init__(self, task_list, slurm_settings=None, temp_folder=None):
 
         if not task_list:
             raise RuntimeError('a list of tasks is required')
 
         self.task_list = task_list
-        self.jobexp = re.compile(r'Submitted batch job (?P<jobid>\d*)')
 
-        missing = list(set(self._get_mandatory_fields()) -
-                       set(list(slurm_settings.keys())))
-        if missing:
-            raise RuntimeError('Error filling up template with missing fields:'
-                               ' {}.'.format("'%s'".join(missing)))
-        self.slurm_settings = slurm_settings
+        if slurm_settings is not None:
+            self.slurm_settings.update(slurm_settings)
 
         if temp_folder is None:
             temp_folder = op.join(os.getcwd(), 'log')
@@ -100,9 +97,6 @@ class TaskSubmissionBase(object):
     def _submit_sbatch(self, task):
         raise NotImplementedError
 
-    def _get_mandatory_fields(self):
-        raise NotImplementedError
-
     def submit(self):
         """
         Submits a list of sbatch files and returns the assigned job ids
@@ -117,23 +111,50 @@ class TaskSubmissionBase(object):
         """
         Busy wait until all jobs in the list are done
         """
-        return NotImplementedError
+        finished_jobs = [False] * len(self._job_ids)
+        while not all(finished_jobs):
+            for i, jobid in enumerate(self._job_ids):
+                if finished_jobs[i]:
+                    continue
+
+                status = check_output([
+                    'squeue', '-j', jobid, '-o', '%t', '-h']).strip()
+
+                if status in SLURM_FAIL_STATUS:
+                    raise RuntimeError('Job id {} failed with status {}.'.format(
+                        jobid, status))
+                if status in SLURM_WAIT_STATUS:
+                    continue
+                else:
+                    finished_jobs[i] = True
+
+            sleep(SLEEP_SECONDS)
+
+        return self._job_ids
 
 
 class SherlockSubmission(TaskSubmissionBase):
     """
     The Sherlock submission
     """
-    def __init__(self, task_list, slurm_settings=None, temp_folder=None):
-        def_settings = SHERLOCK_SBATCH_DEFAULTS.copy()
-        if not slurm_settings is None:
-            def_settings.update(slurm_settings)
-        def_settings['qos'] = def_settings['partition']
-        super(SherlockSubmission, self).__init__(
-            task_list, def_settings, temp_folder)
+    slurm_settings = {
+        'nodes': 1,
+        'time': '01:00:00',
+        'mincpus': 4,
+        'mem_per_cpu': 8000,
+        'modules': ['load singularity'],
+        'partition': 'russpold',
+        'qos': 'russpold',
+        'job_name': 'crn-bidsapp',
+        'job_log': 'crn-bidsapp.log'
+    }
 
-    def _get_mandatory_fields(self):
-        return list(SHERLOCK_SBATCH_DEFAULTS.keys())
+    def __init__(self, task_list, slurm_settings=None, temp_folder=None):
+        if not slurm_settings is None:
+            self.slurm_settings.update(slurm_settings)
+        self.slurm_settings['qos'] = self.slurm_settings['partition']
+        super(SherlockSubmission, self).__init__(
+            task_list, temp_folder=temp_folder)
 
     def _generate_sbatch(self):
         """
@@ -144,7 +165,7 @@ class SherlockSubmission(TaskSubmissionBase):
         for i, task in enumerate(self.task_list):
             sbatch_files.append(op.join(self.temp_folder, 'slurm-%06d.sbatch' % i))
             slurm_settings['commandline'] = task
-            conf = Template(SHERLOCK_SBATCH_TEMPLATE)
+            conf = Template(self.SLURM_TEMPLATE)
             conf.generate_conf(slurm_settings, sbatch_files[-1])
         return sbatch_files
 

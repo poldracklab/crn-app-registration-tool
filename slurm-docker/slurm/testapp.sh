@@ -2,5 +2,5 @@
 
 date
 hostname
-sleep 30
+sleep 60
 date
