@@ -7,9 +7,10 @@ machine:
 
 dependencies:
   pre:
-    - mkdir -p ~/data; if [[ ! -d ${DS003_PATH} ]]; then wget -q --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -O ds003_downsampled.tar.gz "${DS003_URL}" && tar xzf ds003_downsampled.tar.gz -C ~/data/; fi
+    - mkdir -p ~/data; if [[ ! -d ~/data/ds003_downsampled ]]; then wget -q --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -O ds003_downsampled.tar.gz "${DS003_URL}" && tar xzf ds003_downsampled.tar.gz -C ~/data/; fi
     - sudo apt-get update; sudo apt-get install sshpass
     - pip install -r requirements.txt
+    - mkdir -p ~/scratch ~/scratch/slurm
 
   cache_directories:
     - "~/docker"
@@ -19,9 +20,9 @@ dependencies:
     - pip install -e .[all]
     - docker info
     - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
-    - docker build --rm=false -t slurm slurm-docker/
-    - mkdir -p ~/docker; docker save slurm > ~/docker/image.tar
-    - docker run -p 10022:22 -d slurm && sleep 10s
+    - docker build --rm=false -t slurm:latest slurm-docker/
+    - mkdir -p ~/docker; docker save slurm:latest > ~/docker/image.tar
+    - docker run -v ~/scratch:/scratch -p 10022:22 -d slurm:latest && sleep 10s
 
 test:
   override:

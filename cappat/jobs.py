@@ -16,8 +16,40 @@ SHERLOCK_SBATCH_TEMPLATE = pkgr.resource_filename('cappat.tpl', 'sherlock-sbatch
 SHERLOCK_SBATCH_FIELDS = ['nodes', 'time', 'mincpus', 'mem_per_cpu', 'partition',
                           'job_name', 'job_log']
 
-class TaskSubmission(object):
 
+class TaskManager(object):
+    def build(task_list, slurm_settings, temp_folder=None):
+        """
+        Get the appropriate TaskManager object
+        """
+        import socket
+        hostname = socket.gethostname()
+
+        if len(hostname.strip('.')) == 1 and hostname.startswith('login'):
+            fqdns = list(
+                set([socket.getfqdn(i[4][0])
+                     for i in socket.getaddrinfo(socket.gethostname(), None)]))
+            hostname = fqdns[0]
+
+        if not hostname:
+            raise RuntimeError('Could not identify execution system')
+
+        if hostname.endswith('ls5.tacc.utexas.edu'):
+            return 'ls5'
+        elif hostname.endswith('stanford.edu'):
+            return SherlockSubmission(task_list, slurm_settings, temp_folder)
+        elif hostname.endswith('stampede.tacc.utexas.edu'):
+            return 'stampede'
+        elif hostname.endswith('.localdomain'):
+            return CircleCISubmission(task_list, slurm_settings, temp_folder)
+        else:
+            raise RuntimeError('Could not identify {} as execution system'.format(
+                hostname))
+
+        build = staticmethod(build)
+
+
+class TaskSubmissionBase(object):
     def __init__(self, task_list, slurm_settings, temp_folder=None):
 
         if not task_list:
@@ -58,7 +90,7 @@ class TaskSubmission(object):
         return NotImplementedError
 
 
-class SherlockSubmission(TaskSubmission):
+class SherlockSubmission(TaskSubmissionBase):
     """
     The Sherlock submission
     """
@@ -87,6 +119,20 @@ class SherlockSubmission(TaskSubmission):
             slurm_result = check_output(['sbatch', slurm_job])
             # parse output and get job id
 
+class CircleCISubmission(SherlockSubmission):
+    def submit(self):
+        """
+        Submits a list of sbatch files and returns the assigned job ids
+        """
+        for slurm_job in self.sbatch_files:
+            # run sbatch
+            slurm_job = os.path.basename(slurm_job)
+            slurm_result = check_output([
+                'sshpass', '-p', 'testuser',
+                'ssh' '-p', '10022', 'testuser@localhost',
+                'sbatch', os.path.join('/scratch/slurm', slurm_job)])
+            # parse output and get job id
+            print slurm_result
 
 
 def _check_folder(folder):

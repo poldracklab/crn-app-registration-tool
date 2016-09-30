@@ -47,6 +47,9 @@ def get_subject_list(bids_dir, participant_label=None, no_randomize=False):
 
 
 def get_task_list(bids_dir, app_name, subject_list, group_size=1, *args):
+    """
+    Generate a list of tasks for launcher or slurm
+    """
     groups = [sorted(subject_list[i:i+group_size])
               for i in range(0, len(subject_list), group_size)]
 
@@ -59,24 +62,6 @@ def get_task_list(bids_dir, app_name, subject_list, group_size=1, *args):
             app_name, bids_dir, output_dir, ' '.join(part_group),
             '-w work/sjob-{:04d}'.format(i), log_arg(i), ' '.join(args)))
     return task_list
-
-def get_execution_system():
-    import socket
-    fqdns = list(set([socket.getfqdn(i[4][0])
-                 for i in socket.getaddrinfo(socket.gethostname(), None)]))
-
-    if not fqdns:
-        raise RuntimeError('Could not identify execution system')
-
-    if fqdns[0].endswith('ls5.tacc.utexas.edu'):
-        return 'ls5'
-    elif fqdns[0].endswith('stanford.edu'):
-        return 'sherlock'
-    elif fqdns[0].endswith('stampede.tacc.utexas.edu'):
-        return 'stampede'
-    else:
-        raise RuntimeError('Could not identify {} as execution system'.format(
-            fqdns))
 
 
 def main():
