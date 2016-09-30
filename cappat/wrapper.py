@@ -12,9 +12,9 @@ from argparse import ArgumentParser, RawTextHelpFormatter
 from textwrap import dedent
 
 from cappat import __version__, logger, logging
+from cappat.utils import check_folder
 
 wlogger = logging.getLogger('bidsapp.wrapper')
-logger.addHandler(logging.FileHandler(op.abspath('logs/logfile.txt')))
 
 
 def get_subject_list(bids_dir, participant_label=None, no_randomize=False):
@@ -129,6 +129,10 @@ def main():
                         help='BIDS app to call')
     parser.add_argument('--args', default='', action='store', help='append arguments')
     run_wrapper(parser.parse_args())
+
+    check_folder(op.abspath('logs/'))
+    logger.addHandler(logging.FileHandler(op.abspath('logs/logfile.txt')))
+
 
 
 if __name__ == '__main__':

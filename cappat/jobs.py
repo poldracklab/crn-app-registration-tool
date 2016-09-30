@@ -7,7 +7,6 @@ Utilities: Agave wrapper for sherlock
 """
 import os
 from os import path as op
-from errno import EEXIST
 import socket
 from subprocess import check_output
 import re
@@ -15,6 +14,7 @@ from time import sleep
 
 import pkg_resources as pkgr
 from cappat.tpl import Template
+from cappat.utils import check_folder, gethostname
 from cappat import logging
 
 SLURM_FAIL_STATUS = ['CA', 'F', 'TO', 'NF', 'SE']
@@ -32,7 +32,7 @@ class TaskManager:
         """
         Get the appropriate TaskManager object
         """
-        hostname = _gethostname()
+        hostname = gethostname()
         JOB_LOG.info('Identified host: "%s"', hostname)
 
         if not hostname:
@@ -74,7 +74,7 @@ class TaskSubmissionBase(object):
 
         if temp_folder is None:
             temp_folder = op.join(os.getcwd(), 'log')
-        _check_folder(temp_folder)
+        check_folder(temp_folder)
         self.temp_folder = temp_folder
         self.sbatch_files = self._generate_sbatch()
         self._job_ids = []
@@ -213,24 +213,3 @@ class CircleCISubmission(SherlockSubmission):
             'sshpass', '-p', 'testuser',
             'ssh', '-p', '10022', 'testuser@localhost',
             'squeue', '-j', jobid, '-o', '%t', '-h']).strip()
-
-
-
-def _gethostname():
-    hostname = socket.gethostname()
-
-    if len(hostname.strip('.')) == 1 and hostname.startswith('login'):
-        # This is here because ls5 returns only the login node name 'loginN'
-        fqdns = list(
-            set([socket.getfqdn(i[4][0])
-                 for i in socket.getaddrinfo(socket.gethostname(), None)]))
-        hostname = fqdns[0]
-    return hostname
-
-def _check_folder(folder):
-    if not op.exists(folder):
-        try:
-            os.makedirs(folder)
-        except OSError as exc:
-            if not exc.errno == EEXIST:
-                raise
