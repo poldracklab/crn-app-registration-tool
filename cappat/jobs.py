@@ -27,11 +27,13 @@ class TaskManager:
     A task manager factory class
     """
     @staticmethod
-    def build(task_list, slurm_settings=None, temp_folder=None):
+    def build(task_list, slurm_settings=None, temp_folder=None,
+              hostname=None):
         """
         Get the appropriate TaskManager object
         """
-        hostname = gethostname()
+        if hostname is None:
+            hostname = gethostname()
 
         JOB_LOG.info('Identified host: "%s"', hostname)
 
@@ -44,8 +46,11 @@ class TaskManager:
             return SherlockSubmission(task_list, slurm_settings, temp_folder)
         elif hostname.endswith('stampede.tacc.utexas.edu'):
             raise NotImplementedError
-        elif hostname.startswith('box') and hostname.endswith('.localdomain'):
+        elif hostname == 'test.circleci' or (hostname.startswith('box') and
+                                             hostname.endswith('.localdomain')):
             return CircleCISubmission(task_list, slurm_settings, temp_folder)
+        elif hostname == 'test.local':
+            return TestSubmission(task_list, slurm_settings, temp_folder)
         else:
             raise RuntimeError(
                 'Could not identify "{}" as a valid execution system'.format(hostname))
@@ -215,3 +220,29 @@ class CircleCISubmission(SherlockSubmission):
             'sshpass', '-p', 'testuser',
             'ssh', '-p', '10022', 'testuser@localhost',
             'squeue', '-j', jobid, '-o', '%t', '-h']).strip()
+
+class TestSubmission(SherlockSubmission):
+    """
+    A Test submission manager to work with the slurm docker image
+    """
+    def _generate_sbatch(self):
+        """
+        Generates one sbatch file per task
+        """
+        # Remove default settings of Sherlock not supported
+        self.slurm_settings.pop('qos', None)
+        self.slurm_settings.pop('mincpus', None)
+        self.slurm_settings.pop('mem_per_cpu', None)
+        self.slurm_settings.pop('modules', None)
+        return super(TestSubmission, self)._generate_sbatch()
+
+    def _submit_sbatch(self, task):
+        task = task.replace('~/', '/')
+        task = task.replace(os.path.expanduser('~/'), '/')
+
+        return check_output([
+            'echo', '"Submitted batch job 49533"'])
+
+    def _get_job_status(self, jobid):
+        return check_output([
+            'echo', 'FINISHED']).strip()

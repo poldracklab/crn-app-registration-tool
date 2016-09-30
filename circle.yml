@@ -2,6 +2,7 @@ machine:
   environment:
     DS003_URL: "https://osf.io/wqcdg/?action=download&version=1"
     DS003_PATH: ~/data/ds003_downsampled
+    CIRCLE_TEST_HOSTNAME: 'test.circleci'
   services:
     - docker
 
