@@ -78,7 +78,7 @@ def run_wrapper(args):
     # Generate tasks & submit
     task_list = get_task_list(
         args.bids_dir, args.bids_app_name, subject_list, group_size=args.group_size)
-    stm = cj.TaskManager.build(task_list)
+    stm = cj.TaskManager.build(task_list, temp_folder='~/scratch/wrapper')
     stm.submit()
     stm.children_yield()
 
