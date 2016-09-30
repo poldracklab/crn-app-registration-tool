@@ -15,37 +15,31 @@ RUN yum -y install gcc gcc-g++ make munge munge-devel httpd bzip2 vim-minimal ta
 RUN create-munge-key
 
 # Install slurm
-WORKDIR /usr/local
-RUN git clone https://github.com/SchedMD/slurm.git
+RUN curl -ssL https://github.com/SchedMD/slurm/archive/slurm-14-03-9-1.tar.gz | tar -xzC /usr/local/ && \
+    mv /usr/local/slurm-slurm-14-03-9-1 /usr/local/slurm
 WORKDIR /usr/local/slurm
-RUN git checkout tags/slurm-14-03-9-1
-
-RUN ./configure --prefix=/usr --sysconfdir=/etc/sysconfig/slurm --with-mysql_config=/usr/local/bin
-RUN make
-RUN make install
-RUN mkdir -p /etc/sysconfig/slurm
-RUN cp etc/init.d.slurm /etc/init.d/slurmd
-RUN chmod +x /etc/init.d/slurmd
-RUN cp -rf doc/html /var/www/html/slurm
-RUN chown -R apache:apache /var/www/html/slurm
-
-RUN chown -R root:root /var/log/munge
-RUN chown -R root:root /var/lib/munge
-RUN mkdir /var/run/munge
-RUN chown -R root:root /var/run/munge
-RUN chown -R root:root /etc/munge
-
-RUN mkdir /var/log/slurm
-RUN touch /var/log/slurm/job_completions
-RUN touch /var/log/slurm/accounting
-RUN chown -R slurm:slurm /var/log/slurm
-
-RUN touch /var/spool/last_config_lite
-RUN touch /var/spool/last_config_lite.new
-RUN chown slurm:slurm /var/spool/last_config_lite*
-
-RUN chown root:slurm /var/spool
-RUN chmod g+w /var/spool
+RUN ./configure --prefix=/usr --sysconfdir=/etc/sysconfig/slurm --with-mysql_config=/usr/local/bin && \
+    make && \
+    make install && \
+    mkdir -p /etc/sysconfig/slurm && \
+    cp etc/init.d.slurm /etc/init.d/slurmd && \
+    chmod +x /etc/init.d/slurmd && \
+    cp -rf doc/html /var/www/html/slurm && \
+    chown -R apache:apache /var/www/html/slurm && \
+    chown -R root:root /var/log/munge && \
+    chown -R root:root /var/lib/munge && \
+    mkdir /var/run/munge && \
+    chown -R root:root /var/run/munge && \
+    chown -R root:root /etc/munge && \
+    mkdir /var/log/slurm && \
+    touch /var/log/slurm/job_completions && \
+    touch /var/log/slurm/accounting && \
+    chown -R slurm:slurm /var/log/slurm && \
+    touch /var/spool/last_config_lite && \
+    touch /var/spool/last_config_lite.new && \
+    chown slurm:slurm /var/spool/last_config_lite* && \
+    chown root:slurm /var/spool && \
+    chmod g+w /var/spool
 
 ADD slurm/slurm.conf /etc/sysconfig/slurm/slurm.conf
 USER testuser
