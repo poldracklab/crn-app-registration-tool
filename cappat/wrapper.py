@@ -75,10 +75,12 @@ def run_wrapper(args):
 
     # Parse job parameters (slurm_settings)
 
-    # Generate tasks
+    # Generate tasks & submit
     task_list = get_task_list(
         args.bids_dir, args.bids_app_name, subject_list, group_size=args.group_size)
-    tasks = cj.TaskManager.build(task_list)
+    stm = cj.TaskManager.build(task_list)
+    stm.submit()
+
 
 
 def main():

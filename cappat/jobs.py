@@ -139,7 +139,7 @@ class CircleCISubmission(SherlockSubmission):
         """
         self.slurm_settings.pop('qos', None)
         self.slurm_settings.pop('modules', None)
-        super(CircleCISubmission, self)._generate_sbatch()
+        return super(CircleCISubmission, self)._generate_sbatch()
 
     def submit(self):
         """
