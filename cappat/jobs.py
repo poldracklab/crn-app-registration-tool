@@ -23,7 +23,7 @@ SHERLOCK_SBATCH_DEFAULTS = {
     'modules': ['load singularity'],
     'partition': 'russpold',
     'job_name': 'crn-bidsapp',
-    'job_log': 'logs/crn-bidsapp'
+    'job_log': 'crn-bidsapp.log'
 }
 
 
@@ -138,6 +138,8 @@ class CircleCISubmission(SherlockSubmission):
         Generates one sbatch file per task
         """
         self.slurm_settings.pop('qos', None)
+        self.slurm_settings.pop('mincpus', None)
+        self.slurm_settings.pop('mem_per_cpu', None)
         self.slurm_settings.pop('modules', None)
         return super(CircleCISubmission, self)._generate_sbatch()
 

@@ -1,16 +1,24 @@
 #!/bin/bash
-#singularity.example
-#SBATCH --nodes={{nodes}}
-#SBATCH --time={{time}}
+#
+#SBATCH -n {{nodes}}
+#SBATCH -t {{time}}
+#SBATCH -p {{partition}}
+{% if job_name %}
+#SBATCH -J {{job_name}}
+{% endif %}
+{% if mincpus %}
 #SBATCH --mincpus={{mincpus}}
+{% endif %}
+{% if mem_per_cpu %}
 #SBATCH --mem-per-cpu={{mem_per_cpu}}
+{% endif %}
 {% if qos %}
 #SBATCH -q {{qos}}
 {% endif %}
-#SBATCH --partition={{partition}}
-#SBATCH --job-name={{job_name}}
-#SBATCH --output={{job_log}}.out
-#SBATCH --error={{job_log}}.err
+{% if job_log %}
+#SBATCH -o {{job_log}}.out
+#SBATCH -e {{job_log}}.err
+{% endif %}
 {% if modules %}{% for m in modules %}
 module {{m}}
 {% endfor %}{% endif %}
