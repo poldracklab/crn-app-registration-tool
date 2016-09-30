@@ -29,6 +29,7 @@ dependencies:
 test:
   override:
     - py.test -rw -vv
+    - agave_wrapper ~/data/ds003_downsampled out/ --group_size 5 --bids-app-name testapp
     - sshpass -p testuser ssh -p 10022 testuser@localhost sbatch /home/testuser/slurm-parent.submit && sleep 30s && sshpass -p testuser ssh -p 10022 testuser@localhost cat /home/testuser/slurm-child.out
 
 

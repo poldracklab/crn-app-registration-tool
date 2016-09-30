@@ -80,6 +80,11 @@ def run_wrapper(args):
         args.bids_dir, args.bids_app_name, subject_list, group_size=args.group_size)
     stm = cj.TaskManager.build(task_list)
     stm.submit()
+    stm.children_yield()
+
+    # Reduce job
+
+    # Clean up
 
 
 

@@ -38,6 +38,9 @@ def main():
         classifiers=ldict['CLASSIFIERS'],
         packages=find_packages(exclude=['build', 'doc']),
         package_data={'cappt.tpl': ["*.jnj2"]},
+        entry_points={'console_scripts': [
+            'agave_wrapper=cappat.wrapper:main'
+        ]},
         # scripts=glob('scripts/*'),
         zip_safe=False,
         # Dependencies handling
