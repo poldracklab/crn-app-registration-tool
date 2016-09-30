@@ -97,6 +97,9 @@ class TaskSubmissionBase(object):
     def _submit_sbatch(self, task):
         raise NotImplementedError
 
+    def _get_job_status(self, jobid):
+        raise NotImplementedError
+
     def submit(self):
         """
         Submits a list of sbatch files and returns the assigned job ids
@@ -116,10 +119,7 @@ class TaskSubmissionBase(object):
             for i, jobid in enumerate(self._job_ids):
                 if finished_jobs[i]:
                     continue
-
-                status = check_output([
-                    'squeue', '-j', jobid, '-o', '%t', '-h']).strip()
-
+                status = self._get_job_status(jobid)
                 if status in SLURM_FAIL_STATUS:
                     raise RuntimeError('Job id {} failed with status {}.'.format(
                         jobid, status))
@@ -172,6 +172,10 @@ class SherlockSubmission(TaskSubmissionBase):
     def _submit_sbatch(self, task):
         return check_output(['sbatch', task])
 
+    def _get_job_status(self, jobid):
+        return check_output([
+            'squeue', '-j', jobid, '-o', '%t', '-h']).strip()
+
 
 class CircleCISubmission(SherlockSubmission):
     """
@@ -194,6 +198,13 @@ class CircleCISubmission(SherlockSubmission):
             'sshpass', '-p', 'testuser',
             'ssh', '-p', '10022', 'testuser@localhost',
             'sbatch', os.path.join('/scratch/slurm', task)])
+
+    def _get_job_status(self, jobid):
+        return check_output([
+            'sshpass', '-p', 'testuser',
+            'ssh', '-p', '10022', 'testuser@localhost',
+            'squeue', '-j', jobid, '-o', '%t', '-h']).strip()
+
 
 
 def _gethostname():
