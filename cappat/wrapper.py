@@ -45,10 +45,12 @@ def get_subject_list(bids_dir, participant_label=None, no_randomize=False):
 
     return subject_list
 
-def get_task_list(bids_dir, app_name, subject_list, group_size=1, *args):
-    groups = [subject_list[i:i+group_size] for i in range(0, len(subject_list), group_size)]
 
-    log_arg = '>> log/mriqc-{:04d}.log'.format
+def get_task_list(bids_dir, app_name, subject_list, group_size=1, *args):
+    groups = [sorted(subject_list[i:i+group_size])
+              for i in range(0, len(subject_list), group_size)]
+
+    log_arg = '>> log/sjob-{:04d}.log'.format
     output_dir = op.abspath('out/')
     task_list = []
     for i, part_group in enumerate(groups):
@@ -56,6 +58,7 @@ def get_task_list(bids_dir, app_name, subject_list, group_size=1, *args):
             '{0} {1} {2} participant --participant_label {3} {4} {6} {5}'.format(
             app_name, bids_dir, output_dir, ' '.join(part_group),
             '-w work/sjob-{:04d}'.format(i), log_arg(i), ' '.join(args)))
+    return task_list
 
 def get_execution_system():
     import socket

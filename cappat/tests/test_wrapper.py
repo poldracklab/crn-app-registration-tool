@@ -17,6 +17,9 @@ class SetUp:
             os.path.basename(sub)[4:]
             for sub in glob(os.path.join(self._path, 'sub-*'))
         ])
+        if not self._subject_list:
+            raise RuntimeError('No subjects found in BIDS-folder "{}"'.format(
+                self._path))
 
     @property
     def path(self):
@@ -32,28 +35,18 @@ class SetUp:
 def data():
     return SetUp()
 
-
-def test_get_subject_list_nopar(data):
-    sub_list = cw.get_subject_list(data.path, no_randomize=False)
-    assert sorted(sub_list) == data.subject_list
-
-
-@pytest.mark.parametrize("participant_label", [
-    'sub-10 sub-05',
-    '10 05'])
-def test_get_subject_list_part(data, participant_label):
+@pytest.mark.parametrize("participant_label,no_random,expected", [
+    (None, False, ['%02d' % i for i in range(1, 14)]),
+    ('sub-10 sub-05', False, ['05', '10']),
+    ('10 05', False, ['05', '10']),
+    (None, True, ['%02d' % i for i in range(1, 14)]),
+    ('sub-10 sub-05', True, ['05', '10']),
+    ('10 05', True, ['05', '10']),
+    pytest.mark.xfail(('sub-05 sub-15', True, ['05', '15']), raises=RuntimeError),
+    pytest.mark.xfail(('05 15', True, ['05', '15']), raises=RuntimeError),
+    pytest.mark.xfail(('27 15', True, ['27', '15']), raises=RuntimeError)])
+def test_get_subject_list_part(data, participant_label, no_random, expected):
     sub_list = cw.get_subject_list(data.path,
                                    participant_label,
-                                   no_randomize=False)
-    assert  sorted(sub_list) == ['05', '10']
-
-@pytest.mark.xfail(raises=RuntimeError)
-@pytest.mark.parametrize("participant_label", [
-    'sub-15 sub-05',
-    '15 05',
-    '15 27'])
-def test_get_subject_list_raise(data, participant_label):
-    sub_list = cw.get_subject_list(data.path,
-                                   participant_label,
-                                   no_randomize=False)
-    assert  sorted(sub_list) == ['05', '10']
+                                   no_randomize=no_random)
+    assert  len(set(expected) - set(sub_list)) == 0
