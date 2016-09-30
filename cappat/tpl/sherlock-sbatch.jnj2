@@ -9,7 +9,7 @@
 #SBATCH --job-name={{job_name}}
 #SBATCH --output={{job_log}}.out
 #SBATCH --error={{job_log}}.err
-{% for m in modules %}
+{% if modules %}{% for m in modules %}
 module {{m}}
-{% endif %}
+{% endfor %}{% endif %}
 srun {{commandline}}
