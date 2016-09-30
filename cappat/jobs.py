@@ -141,7 +141,7 @@ class CircleCISubmission(SherlockSubmission):
             slurm_job = os.path.basename(slurm_job)
             slurm_result = check_output([
                 'sshpass', '-p', 'testuser',
-                'ssh' '-p', '10022', 'testuser@localhost',
+                'ssh', '-p', '10022', 'testuser@localhost',
                 'sbatch', os.path.join('/scratch/slurm', slurm_job)])
             # parse output and get job id
             with open('/scratch/slurm/slurm-output%04d.txt' % i, 'w') as sfile:
