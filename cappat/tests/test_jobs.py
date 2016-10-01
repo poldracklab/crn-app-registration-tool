@@ -5,7 +5,7 @@
 
 import os
 from glob import glob
-import mock
+# import mock
 # import pytest
 from cappat import jobs as cj
 

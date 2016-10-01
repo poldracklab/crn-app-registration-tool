@@ -13,6 +13,7 @@ from time import sleep
 import logging
 
 import pkg_resources as pkgr
+from cappat import AGAVE_JOB_LOGS
 from cappat.tpl import Template
 from cappat.utils import check_folder, gethostname
 
@@ -20,7 +21,7 @@ SLURM_FAIL_STATUS = ['CA', 'F', 'TO', 'NF', 'SE']
 SLURM_WAIT_STATUS = ['R', 'PD', 'CF', 'CG']
 SLEEP_SECONDS = 5
 
-JOB_LOG = logging.getLogger('bidsapp.taskmanager')
+JOB_LOG = logging.getLogger('taskmanager')
 
 class TaskManager:
     """
@@ -78,7 +79,7 @@ class TaskSubmissionBase(object):
             self.slurm_settings.update(slurm_settings)
 
         if temp_folder is None:
-            temp_folder = 'log/'
+            temp_folder = AGAVE_JOB_LOGS
 
         self.temp_folder = check_folder(op.abspath(temp_folder))
         self.sbatch_files = self._generate_sbatch()

@@ -12,7 +12,7 @@ from argparse import ArgumentParser, RawTextHelpFormatter
 from textwrap import dedent
 import logging
 
-from cappat import __version__
+from cappat import __version__, AGAVE_JOB_LOGS
 
 
 wlogger = logging.getLogger('wrapper')
@@ -137,7 +137,7 @@ def main():
                         help='do not randomize participants list before grouping')
     parser.add_argument('--bids-app-name', required=True, action='store',
                         help='BIDS app to call')
-    parser.add_argument('--log-dir', default='logs/', action='store',
+    parser.add_argument('--log-dir', default=AGAVE_JOB_LOGS, action='store',
                         help='points to a folder where logs should be stored')
     parser.add_argument('--args', default='', action='store', help='append arguments')
     run_wrapper(parser.parse_args())
