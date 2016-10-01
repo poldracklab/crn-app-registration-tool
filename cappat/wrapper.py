@@ -11,7 +11,7 @@ from random import shuffle
 from argparse import ArgumentParser, RawTextHelpFormatter
 from textwrap import dedent
 import logging
-
+from yaml import load as loadyml
 from cappat import __version__, AGAVE_JOB_LOGS, AGAVE_JOB_OUTPUT
 
 
@@ -84,6 +84,9 @@ def run_wrapper(args):
     logging.basicConfig(filename=op.join(log_dir, 'logfile.txt'),
                         level=logging.INFO)
 
+    with open(args.settings) as sfh:
+        slurm_settings = loadyml(shf)
+
     # Generate subjects list
     subject_list = get_subject_list(args.bids_dir,
                                     args.participant_label,
@@ -95,7 +98,7 @@ def run_wrapper(args):
     task_list = get_task_list(
         args.bids_dir, args.bids_app_name, subject_list, group_size=args.group_size)
     # TaskManager factory will return the appropriate submission object
-    stm = cj.TaskManager.build(task_list)
+    stm = cj.TaskManager.build(task_list, slurm_settings=slurm_settings)
     # Participant level mapping
     stm.map_participant()
     # Participant level polling
@@ -133,6 +136,7 @@ def main():
                              'is not provided all subjects should be analyzed. Multiple '
                              'participants can be specified with a space separated list.',
                         nargs="*")
+    parser.add_argument('--setting', action='store', help='settings file')
     parser.add_argument('--group-size', default=1, action='store', type=int,
                         help='parallelize participants in groups')
     parser.add_argument('--no-randomize', default=False, action='store_true',

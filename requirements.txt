@@ -1,3 +1,4 @@
 jinja2
+PyYAML
 simplejson
 sphinx
