@@ -29,7 +29,7 @@ dependencies:
 
 test:
   override:
-    - py.test -rw -vv
+    - py.test -rw -vv -n 16 --junitxml=${CIRCLE_TEST_REPORTS}/tests.xml
     - cd ~/scratch/testwrapper; agave_wrapper ~/data/ds003_downsampled out/ --group-size 5 --bids-app-name testapp
     - sshpass -p testuser ssh -p 10022 testuser@localhost sbatch /home/testuser/slurm-parent.submit && sleep 30s && sshpass -p testuser ssh -p 10022 testuser@localhost cat /home/testuser/slurm-child.out
 

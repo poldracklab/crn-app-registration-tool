@@ -201,6 +201,13 @@ class CircleCISubmission(SherlockSubmission):
     """
     A CircleCI submission manager to work with the slurm docker image
     """
+    slurm_settings = {
+        'nodes': 1,
+        'time': '01:00:00',
+        'partition': 'debug',
+        'job_name': 'crn-bidsapp',
+        'job_log': 'crn-bidsapp.log'
+    }
     def _generate_sbatch(self):
         """
         Generates one sbatch file per task
@@ -210,6 +217,7 @@ class CircleCISubmission(SherlockSubmission):
         self.slurm_settings.pop('mincpus', None)
         self.slurm_settings.pop('mem_per_cpu', None)
         self.slurm_settings.pop('modules', None)
+        self.slurm_settings['']
         return super(CircleCISubmission, self)._generate_sbatch()
 
     def _submit_sbatch(self, task):

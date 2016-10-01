@@ -16,7 +16,7 @@ JOB_SETTINGS = {
     'mem_per_cpu': 4000,
     'partition': 'debug',
     'job_name': 'testjob',
-    'job_log': '/scratch/testjob',
+    'job_log': '/scratch/slurm/test-slurm-job',
     'modules': []
 }
 
