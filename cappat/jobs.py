@@ -217,7 +217,6 @@ class CircleCISubmission(SherlockSubmission):
         self.slurm_settings.pop('mincpus', None)
         self.slurm_settings.pop('mem_per_cpu', None)
         self.slurm_settings.pop('modules', None)
-        self.slurm_settings['']
         return super(CircleCISubmission, self)._generate_sbatch()
 
     def _submit_sbatch(self, task):
