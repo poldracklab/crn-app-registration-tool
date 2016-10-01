@@ -118,7 +118,7 @@ class TaskSubmissionBase(object):
         Submits a list of sbatch files and returns the assigned job ids
         """
         for i, task in enumerate(self.sbatch_files):
-            JOB_LOG.info('Submitting task %d: %s', i, task)
+            JOB_LOG.info('Submitting sbatch/launcher file %s (%d)', task, i)
             # run sbatch
             sresult = self._submit_sbatch(task)
             # parse output and get job id
@@ -130,6 +130,7 @@ class TaskSubmissionBase(object):
         """
         Busy wait until all jobs in the list are done
         """
+        JOB_LOG.info('Starting busy wait on jobs %s', ' '.join(self._job_ids))
         finished_jobs = [False] * len(self._job_ids)
         while not all(finished_jobs):
             for i, jobid in enumerate(self._job_ids):
