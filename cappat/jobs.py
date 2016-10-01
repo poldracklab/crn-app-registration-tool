@@ -224,10 +224,19 @@ class CircleCISubmission(SherlockSubmission):
         task = task.replace(os.path.expanduser('~/'), '/')
         task = task.replace('~/', '/')
 
-        return check_output([
-            'sshpass', '-p', 'testuser',
-            'ssh', '-p', '10022', 'testuser@localhost',
-            'sbatch', task])
+        try:
+            result = check_output([
+                'sshpass', '-p', 'testuser',
+                'ssh', '-p', '10022', 'testuser@localhost',
+                'sbatch', task])
+        except Exception as exc:
+            JOB_LOG.critical(
+                'Error submitting %s: \n\t%s', task, result)
+            JOB_LOG.error(
+                'Exception message: \n%s', str(exc))
+            raise
+
+        return result
 
     def _get_job_status(self, jobid):
         return check_output([
