@@ -122,7 +122,7 @@ class TaskSubmissionBase(object):
         raise NotImplementedError
 
     def _get_job_status(self, jobid):
-        raise NotImplementedError
+        return _run_cmd(['squeue', '-j', jobid, '-o', '%t', '-h']).strip()
 
     def map_participant(self):
         """
@@ -178,6 +178,48 @@ class TaskSubmissionBase(object):
         JOB_LOG.info('Kicking off reduce operation')
         return _run_cmd(self._group_cmd)
 
+class Lonestar5Submission(TaskSubmissionBase):
+    """
+    The LS5 submission manager
+    """
+    slurm_settings = {
+        'nodes': 1,
+        'time': '01:00:00',
+        'mincpus': 1,
+        'mem_per_cpu': 8000,
+        'job_name': 'crn-bidsapp',
+        'job_log': 'crn-bidsapp.log'
+    }
+
+    def _generate_sbatch(self):
+        """
+        Generates one launcher file
+        """
+        launcher_file = op.join(self.temp_folder, 'launch_script.sh')
+        with open(launcher_file, 'w') as lfh:
+            lfh.write('\n'.join(self.task_list))
+        return [launcher_file]
+
+    def _submit_sbatch(self, task):
+        with open(task, 'r') as tfh:
+            nodes = sum(1 for line in tfh if line.strip() and not line.strip().startswith('#'))
+        maxruntime = _secs2time(int(0.85 * _time2secs(self.slurm_settings['time'])))
+        values = {
+            'cwd': os.getcwd(),
+            'launcher_file': task,
+            'nodes': nodes,
+            'ncpus': 1,
+            'runtime': maxruntime,
+            'jobname': self.slurm_settings['job_name']
+        }
+        launcher_cmd = """\
+\"export LAUNCHER_WORKDIR={cwd}; \
+/corral-repl/utexas/poldracklab/users/wtriplet/external/ls5_launch/launch -s {launcher_file} \
+-n {ncpus} -N {nodes} -d {cwd} -r {runtime} -j {jobname}\"\
+""".format(**values)
+        return _run_cmd(['ssh', '-oStrictHostKeyChecking=no', 'login2', launcher_cmd])
+
+
 class SherlockSubmission(TaskSubmissionBase):
     """
     The Sherlock submission
@@ -216,9 +258,6 @@ class SherlockSubmission(TaskSubmissionBase):
 
     def _submit_sbatch(self, task):
         return _run_cmd(['sbatch', task])
-
-    def _get_job_status(self, jobid):
-        return _run_cmd(['squeue', '-j', jobid, '-o', '%t', '-h']).strip()
 
 
 class CircleCISubmission(SherlockSubmission):
@@ -290,3 +329,12 @@ def _run_cmd(cmd):
                          error.returncode, ' '.join(cmd), error.output)
         raise
     return result
+
+def _time2secs(timestr):
+    return sum((60**i) * int(t) for i, t in enumerate(reversed(timestr.split(':'))))
+
+def _secs2time(seconds):
+    m, s = divmod(seconds, 60)
+    h, m = divmod(m, 60)
+    return "%02d:%02d:%02d" % (h, m, s)
+
