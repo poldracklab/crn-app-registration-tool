@@ -85,7 +85,7 @@ def run_wrapper(args):
                         level=logging.INFO)
 
     with open(args.settings) as sfh:
-        settings = loadyml(shf)
+        settings = loadyml(sfh)
 
     # Generate subjects list
     subject_list = get_subject_list(args.bids_dir,
