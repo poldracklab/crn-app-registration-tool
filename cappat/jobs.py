@@ -102,6 +102,7 @@ class TaskSubmissionBase(object):
         else:
             raise RuntimeError('Job ID could not extracted. Slurm message:\n{}'.format(
                 slurm_msg))
+        return jobid
 
     def _generate_sbatch(self):
         raise NotImplementedError
@@ -116,11 +117,14 @@ class TaskSubmissionBase(object):
         """
         Submits a list of sbatch files and returns the assigned job ids
         """
-        for task in self.sbatch_files:
+        for i, task in enumerate(self.sbatch_files):
+            JOB_LOG.info('Submitting task %d: %s', i, task)
             # run sbatch
             sresult = self._submit_sbatch(task)
             # parse output and get job id
-            self._parse_jobid(sresult)
+            jobid = self._parse_jobid(sresult)
+            JOB_LOG.info(
+                'Submitted task %d, job ID %s was assigned', i, jobid)
 
     def children_yield(self):
         """
