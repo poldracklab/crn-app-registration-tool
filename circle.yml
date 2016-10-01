@@ -1,9 +1,14 @@
 machine:
   environment:
     DS003_URL: "https://osf.io/wqcdg/?action=download&version=1"
-    DS003_PATH: "$HOME/data/ds003_downsampled"
+    bidsFolder: "$HOME/data/ds003_downsampled"
     CIRCLE_TEST_HOSTNAME: 'test.circleci'
     SCRATCH: "$HOME/scratch"
+    AGAVE_JOB_ID: "5109696338982465050-242ac115-0001-007"
+    AGAVE_APP_ID: "testapp-0.0.1"
+    AGAVE_JOB_MEMORY_PER_NODE: 4
+    AGAVE_JOB_MAX_RUNTIME: "01:01:01"
+    groupSize: 4
   services:
     - docker
 
@@ -19,7 +24,8 @@ dependencies:
     - mkdir -p ~/.apt-cache/partial; sudo rm -rf /var/cache/apt/archives; sudo ln -s ~/.apt-cache /var/cache/apt/archives
     - sudo apt-get -y update; sudo apt-get -y install sshpass
     - pip install -r requirements.txt
-    - mkdir -p ~/data; if [[ ! -d ${DS003_PATH} ]]; then wget -q --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -O ds003_downsampled.tar.gz "${DS003_URL}" && tar xzf ds003_downsampled.tar.gz -C ~/data/; fi
+    - mkdir -p ~/data; if [[ ! -d ${bidsFolder} ]]; then wget -q --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -O ds003_downsampled.tar.gz "${DS003_URL}" && tar xzf ds003_downsampled.tar.gz -C ~/data/; fi
+    - ln -s script/wrapper.sh $SCRATCH/testwrapper/
 
   override:
     - pip install -e .[all]
@@ -31,7 +37,7 @@ dependencies:
 test:
   override:
     - py.test -rw -vv -n 16 --junitxml=${CIRCLE_TEST_REPORTS}/tests.xml
-    - cd $SCRATCH/testwrapper; agave_wrapper ${DS003_PATH} out/ --group-size 5 --bids-app-name testapp
+    - cd $SCRATCH/testwrapper; /bin/bash wrapper.sh
     - sshpass -p testuser ssh -p 10022 testuser@localhost sbatch /home/testuser/slurm-parent.submit && sleep 30s && sshpass -p testuser ssh -p 10022 testuser@localhost cat /home/testuser/slurm-child.out
 
 general:
