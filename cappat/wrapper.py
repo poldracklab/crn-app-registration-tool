@@ -85,7 +85,7 @@ def run_wrapper(args):
                         level=logging.INFO)
 
     with open(args.settings) as sfh:
-        slurm_settings = loadyml(shf)
+        settings = loadyml(shf)
 
     # Generate subjects list
     subject_list = get_subject_list(args.bids_dir,
@@ -98,7 +98,7 @@ def run_wrapper(args):
     task_list = get_task_list(
         args.bids_dir, args.bids_app_name, subject_list, group_size=args.group_size)
     # TaskManager factory will return the appropriate submission object
-    stm = cj.TaskManager.build(task_list, slurm_settings=slurm_settings)
+    stm = cj.TaskManager.build(task_list, slurm_settings=settings['agave'])
     # Participant level mapping
     stm.map_participant()
     # Participant level polling
@@ -136,7 +136,7 @@ def main():
                              'is not provided all subjects should be analyzed. Multiple '
                              'participants can be specified with a space separated list.',
                         nargs="*")
-    parser.add_argument('--setting', action='store', help='settings file')
+    parser.add_argument('--settings', action='store', help='settings file')
     parser.add_argument('--group-size', default=1, action='store', type=int,
                         help='parallelize participants in groups')
     parser.add_argument('--no-randomize', default=False, action='store_true',
