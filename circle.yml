@@ -3,6 +3,7 @@ machine:
     DS003_URL: "https://osf.io/wqcdg/?action=download&version=1"
     DS003_PATH: "$HOME/data/ds003_downsampled"
     CIRCLE_TEST_HOSTNAME: 'test.circleci'
+    SCRATCH: "$HOME/scratch"
   services:
     - docker
 
@@ -11,26 +12,26 @@ dependencies:
     - "~/docker"
     - "~/data"
     - "~/.apt-cache"
+
   pre:
     # Let CircleCI cache the apt archive
-    - mkdir -p ~/.apt-cache/partial && sudo rm -rf /var/cache/apt/archives && sudo ln -s ~/.apt-cache /var/cache/apt/archives
-    - mkdir -p ~/data; if [[ ! -d $DS003_PATH ]]; then wget -q --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -O ds003_downsampled.tar.gz "${DS003_URL}" && tar xzf ds003_downsampled.tar.gz -C ~/data/; fi
+    - mkdir -p $SCRATCH $SCRATCH/slurm $SCRATCH/testwrapper
+    - mkdir -p ~/.apt-cache/partial; sudo rm -rf /var/cache/apt/archives; sudo ln -s ~/.apt-cache /var/cache/apt/archives
     - sudo apt-get -y update; sudo apt-get -y install sshpass
     - pip install -r requirements.txt
-    - mkdir -p ~/scratch ~/scratch/slurm ~/scratch/testwrapper
+    - mkdir -p ~/data; if [[ ! -d ${DS003_PATH} ]]; then wget -q --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -O ds003_downsampled.tar.gz "${DS003_URL}" && tar xzf ds003_downsampled.tar.gz -C ~/data/; fi
 
   override:
     - pip install -e .[all]
-    - docker info
     - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
     - docker build --rm=false -t slurm:latest slurm-docker/
     - mkdir -p ~/docker; docker save slurm:latest > ~/docker/image.tar
-    - docker run -v ~/scratch:/scratch -p 10022:22 -d slurm:latest && sleep 10s
+    - docker run -v $SCRATCH:/scratch -p 10022:22 -d slurm:latest && sleep 10s
 
 test:
   override:
     - py.test -rw -vv -n 16 --junitxml=${CIRCLE_TEST_REPORTS}/tests.xml
-    - cd ~/scratch/testwrapper; agave_wrapper ${DS003_PATH} out/ --group-size 5 --bids-app-name testapp
+    - cd $SCRATCH/testwrapper; agave_wrapper ${DS003_PATH} out/ --group-size 5 --bids-app-name testapp
     - sshpass -p testuser ssh -p 10022 testuser@localhost sbatch /home/testuser/slurm-parent.submit && sleep 30s && sshpass -p testuser ssh -p 10022 testuser@localhost cat /home/testuser/slurm-child.out
 
 

@@ -23,10 +23,14 @@ SLEEP_SECONDS = 5
 
 JOB_LOG = logging.getLogger('taskmanager')
 
-class TaskManager:
+
+class TaskManager(object):
     """
     A task manager factory class
     """
+    def __init__(self):
+        raise RuntimeError('This class cannot be instatiated.')
+
     @staticmethod
     def build(task_list, slurm_settings=None, temp_folder=None,
               hostname=None):
@@ -58,6 +62,9 @@ class TaskManager:
 
 
 class TaskSubmissionBase(object):
+    """
+    A base class for task submission
+    """
     slurm_settings = {
         'nodes': 1,
         'time': '01:00:00',
