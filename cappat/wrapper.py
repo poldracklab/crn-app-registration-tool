@@ -12,7 +12,7 @@ from argparse import ArgumentParser, RawTextHelpFormatter
 from textwrap import dedent
 import logging
 
-from cappat import __version__, AGAVE_JOB_LOGS
+from cappat import __version__, AGAVE_JOB_LOGS, AGAVE_JOB_OUTPUT
 
 
 wlogger = logging.getLogger('wrapper')
@@ -60,16 +60,16 @@ def get_task_list(bids_dir, app_name, subject_list, group_size=1, *args):
     groups = [sorted(subject_list[i:i+group_size])
               for i in range(0, len(subject_list), group_size)]
 
-    log_arg = '>> log/sjob-{:04d}.log'.format
-    output_dir = op.abspath('out/')
+    log_arg = '>> {}sjob-{:04d}.log'.format
+    output_dir = op.abspath(AGAVE_JOB_OUTPUT)
     task_list = []
     for i, part_group in enumerate(groups):
         task_list.append(
             '{0} {1} {2} participant --participant_label {3} {4} {6} {5}'.format(
             app_name, bids_dir, output_dir, ' '.join(part_group),
-            '-w work/sjob-{:04d}'.format(i), log_arg(i), ' '.join(args)))
+            '-w work/sjob-{:04d}'.format(i), log_arg(AGAVE_JOB_LOGS, i), ' '.join(args)))
 
-    wlogger.info('Task list: \n\t%s', '\n\t'.join(subject_list))
+    wlogger.info('Task list: \n\t%s', '\n\t'.join(task_list))
     return task_list
 
 
