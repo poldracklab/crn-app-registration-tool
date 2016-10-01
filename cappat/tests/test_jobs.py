@@ -29,7 +29,7 @@ def test_job_creation():
                                  temp_folder=os.path.expanduser('~/scratch/slurm'),
                                  hostname=os.getenv('CIRCLE_TEST_HOSTNAME',
                                                     'test.local'))
-    slurm.submit()
+    slurm.map_participant()
     assert len(slurm.job_ids) == 1
 
 def test_job_run():
@@ -40,5 +40,5 @@ def test_job_run():
                                  temp_folder=os.path.expanduser('~/scratch/slurm'),
                                  hostname=os.getenv('CIRCLE_TEST_HOSTNAME',
                                                     'test.local'))
-    slurm.submit()
-    assert len(slurm.children_yield()) == 1
+    slurm.map_participant()
+    assert len(slurm.wait_participant()) == 1

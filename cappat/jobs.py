@@ -7,7 +7,7 @@ Utilities: Agave wrapper for sherlock
 """
 import os
 from os import path as op
-from subprocess import check_output
+from subprocess import check_output, CalledProcessError, STDOUT
 import re
 from time import sleep
 import logging
@@ -75,7 +75,7 @@ class TaskSubmissionBase(object):
 
     SLURM_TEMPLATE = pkgr.resource_filename('cappat.tpl', 'sherlock-sbatch.jnj2')
 
-    def __init__(self, task_list, slurm_settings=None, temp_folder=None):
+    def __init__(self, task_list, slurm_settings=None, group_cmd=None, temp_folder=None):
 
         if not task_list:
             raise RuntimeError('a list of tasks is required')
@@ -91,6 +91,7 @@ class TaskSubmissionBase(object):
         self.temp_folder = check_folder(op.abspath(temp_folder))
         self.sbatch_files = self._generate_sbatch()
         self._job_ids = []
+        self._group_cmd = group_cmd
 
         JOB_LOG.info('Created TaskManager type "%s"', self.__class__.__name__)
 
@@ -98,6 +99,9 @@ class TaskSubmissionBase(object):
     def job_ids(self):
         return self._job_ids
 
+    @property
+    def group_cmd(self):
+        return self._group_cmd
 
     def _parse_jobid(self, slurm_msg):
         if isinstance(slurm_msg, (list, tuple)):
@@ -120,7 +124,7 @@ class TaskSubmissionBase(object):
     def _get_job_status(self, jobid):
         raise NotImplementedError
 
-    def submit(self):
+    def map_participant(self):
         """
         Submits a list of sbatch files and returns the assigned job ids
         """
@@ -133,7 +137,7 @@ class TaskSubmissionBase(object):
             JOB_LOG.info(
                 'Submitted task %d, job ID %s was assigned', i, jobid)
 
-    def children_yield(self):
+    def wait_participant(self):
         """
         Busy wait until all jobs in the list are done
         """
@@ -163,6 +167,16 @@ class TaskSubmissionBase(object):
         JOB_LOG.info('Finished wait on jobs %s', ' '.join(self._job_ids))
         return self._job_ids
 
+    def run_grouplevel(self):
+        """
+        Run the reduce operation over the participant map
+        """
+        if self._group_cmd is None:
+            JOB_LOG.warning('Group level command not set, skipping reduce operation.')
+            return None
+
+        JOB_LOG.info('Kicking off reduce operation')
+        return _run_cmd(self._group_cmd)
 
 class SherlockSubmission(TaskSubmissionBase):
     """
@@ -201,11 +215,10 @@ class SherlockSubmission(TaskSubmissionBase):
         return sbatch_files
 
     def _submit_sbatch(self, task):
-        return check_output(['sbatch', task])
+        return _run_cmd(['sbatch', task])
 
     def _get_job_status(self, jobid):
-        return check_output([
-            'squeue', '-j', jobid, '-o', '%t', '-h']).strip()
+        return _run_cmd(['squeue', '-j', jobid, '-o', '%t', '-h']).strip()
 
 
 class CircleCISubmission(SherlockSubmission):
@@ -231,25 +244,16 @@ class CircleCISubmission(SherlockSubmission):
         return super(CircleCISubmission, self)._generate_sbatch()
 
     def _submit_sbatch(self, task):
+        # Fix paths for docker image in CircleCI
         task = task.replace(os.path.expanduser('~/'), '/')
         task = task.replace('~/', '/')
-
-        try:
-            result = check_output([
+        return _run_cmd([
                 'sshpass', '-p', 'testuser',
                 'ssh', '-p', '10022', 'testuser@localhost',
                 'sbatch', task])
-        except Exception as exc:
-            JOB_LOG.critical(
-                'Error submitting %s: \n\t%s', task, result)
-            JOB_LOG.error(
-                'Exception message: \n%s', str(exc))
-            raise
-
-        return result
 
     def _get_job_status(self, jobid):
-        return check_output([
+        return _run_cmd([
             'sshpass', '-p', 'testuser',
             'ssh', '-p', '10022', 'testuser@localhost',
             'squeue', '-j', jobid, '-o', '%t', '-h']).strip()
@@ -272,10 +276,17 @@ class TestSubmission(SherlockSubmission):
     def _submit_sbatch(self, task):
         task = task.replace('~/', '/')
         task = task.replace(os.path.expanduser('~/'), '/')
-
-        return check_output([
-            'echo', '"Submitted batch job 49533"'])
+        return _run_cmd(['echo', '"Submitted batch job 49533"'])
 
     def _get_job_status(self, jobid):
-        return check_output([
-            'echo', 'FINISHED']).strip()
+        return _run_cmd(['echo', 'FINISHED']).strip()
+
+def _run_cmd(cmd):
+    JOB_LOG.info('Executing command line: %s', ' '.join(cmd))
+    try:
+        result = check_output(cmd, stderr=STDOUT)
+    except CalledProcessError as error:
+        JOB_LOG.critical('Error submitting (exit code %d): \n\tCmdline: %s\n\tOutput:\n\t%s',
+                         error.returncode, ' '.join(cmd), error.output)
+        raise
+    return result

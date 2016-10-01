@@ -74,6 +74,7 @@ def get_task_list(bids_dir, app_name, subject_list, group_size=1, *args):
 
 def run_wrapper(args):
     """
+    A python wrapper to BIDS-Apps for Agave
     """
     import cappat.jobs as cj
     from cappat.utils import check_folder
@@ -93,12 +94,14 @@ def run_wrapper(args):
     # Generate tasks & submit
     task_list = get_task_list(
         args.bids_dir, args.bids_app_name, subject_list, group_size=args.group_size)
+    # TaskManager factory will return the appropriate submission object
     stm = cj.TaskManager.build(task_list)
-    stm.submit()
-    stm.children_yield()
-
-    # Reduce job
-
+    # Participant level mapping
+    stm.map_participant()
+    # Participant level polling
+    stm.wait_participant()
+    # Group level reduce
+    stm.run_grouplevel()
     # Clean up
 
 
