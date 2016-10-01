@@ -153,10 +153,14 @@ class TaskSubmissionBase(object):
                     JOB_LOG.info('Job %s finished.', jobid)
                     finished_jobs[i] = True
 
+            if all(finished_jobs):
+                break
+
             pending = [jid for jid, jdone in zip(self._job_ids, finished_jobs) if not jdone]
             JOB_LOG.info('There are pending jobs: %s', ' '.join(pending))
             sleep(SLEEP_SECONDS)
 
+        JOB_LOG.info('Finished wait on jobs %s', ' '.join(self._job_ids))
         return self._job_ids
 
 
