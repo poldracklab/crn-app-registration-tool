@@ -8,7 +8,7 @@ import cappat.utils as cu
 
 
 @mock.patch('cappat.utils.socket.gethostname',
-            mock.Mock(return_value='login1'))
+            mock.Mock(return_value='nid00017'))
 @mock.patch('cappat.utils.socket.getfqdn',
             mock.Mock(return_value='ls5.tacc.utexas.edu'))
 @mock.patch('cappat.utils.socket.getaddrinfo',

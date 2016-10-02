@@ -30,8 +30,11 @@ def getsystemname():
     """
     hostname = socket.gethostname()
 
-    if len(hostname.split('.')) == 1 and hostname.startswith('login'):
-        # This is here because ls5 returns only the login node name 'loginN'
+    if '.' not in hostname:
+        hostname = os.getenv('AGAVE_EXECUTION_SYSTEM', hostname)
+
+    if '.' not in hostname:
+        # This is here because ls5 returns only the node name
         fqdns = list(
             set([socket.getfqdn(i[4][0])
                  for i in socket.getaddrinfo(socket.gethostname(), None)]))
