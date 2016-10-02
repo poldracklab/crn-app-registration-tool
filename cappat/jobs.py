@@ -72,6 +72,7 @@ class TaskSubmissionBase(object):
         'job_log': 'crn-bidsapp.log'
     }
     jobexp = re.compile(r'Submitted batch job (?P<jobid>\d*)')
+    _squeue_cmd = ['squeue']
 
     SLURM_TEMPLATE = pkgr.resource_filename('cappat', 'tpl/sherlock-sbatch.jnj2')
 
@@ -90,14 +91,18 @@ class TaskSubmissionBase(object):
 
         self.temp_folder = check_folder(op.abspath(temp_folder))
         self.sbatch_files = self._generate_sbatch()
-        self._job_ids = []
+        self._jobs = {}
         self._group_cmd = group_cmd
 
         JOB_LOG.info('Created TaskManager type "%s"', self.__class__.__name__)
 
     @property
     def job_ids(self):
-        return self._job_ids
+        return list(self._jobs.keys())
+
+    @property
+    def jobs(self):
+        return self._jobs
 
     @property
     def group_cmd(self):
@@ -109,7 +114,7 @@ class TaskSubmissionBase(object):
 
         jobid = self.jobexp.search(slurm_msg).group('jobid')
         if jobid:
-            self._job_ids.append(jobid)
+            self._jobs[jobid] = 'SUBMITTED'
         else:
             raise RuntimeError('Job ID could not extracted. Slurm message:\n{}'.format(
                 slurm_msg))
@@ -121,8 +126,43 @@ class TaskSubmissionBase(object):
     def _submit_sbatch(self, task):
         raise NotImplementedError
 
-    def _get_job_status(self, jobid):
-        return _run_cmd(['squeue', '-j', jobid, '-o', '%t', '-h']).strip()
+    def _get_job_acct(self):
+        # sacct -n -X -j 10016750,10016749 -o JobID,State,ExitCode
+        job_ids = list(self._jobs.keys())
+        JOB_LOG.info('Checking exit code of jobs %s', ' '.join(job_ids))
+
+        results = _run_cmd([
+            'sacct', '-n', '-X', '-j', ','.join(job_ids),
+            '-o', 'JobID,State,ExitCode'])
+
+        #parse results
+        exit_codes = []
+        for line in results.split('\n'):
+            fields = line.split()
+            self._jobs[fields[0]] = fields[1]
+            exit_codes.append(int(fields[2]))
+        return exit_codes
+
+    def _get_jobs_status(self):
+        statuses = _run_cmd(self._squeue_cmd + ['-j', ','.join(self.job_ids),
+                            '-o', '%i,%t', '-h']).strip()
+
+        if statuses.strip().endswith('Invalid job id specified'):
+            # All jobs finished
+            return True
+
+        pending = []
+        for line in statuses.strip('\n'):
+            jobid, status = line.strip(',')
+            self._jobs[jobid] = status
+            pending.append(jobid)
+
+            if status in SLURM_FAIL_STATUS:
+                raise RuntimeError('Job id {} failed with status {}.'.format(
+                                   jobid, status))
+
+        JOB_LOG.info('There are pending jobs: %s', ' '.join(pending))
+        return False
 
     def map_participant(self):
         """
@@ -141,35 +181,22 @@ class TaskSubmissionBase(object):
         """
         Busy wait until all jobs in the list are done
         """
-        JOB_LOG.info('Starting busy wait on jobs %s', ' '.join(self._job_ids))
-        finished_jobs = [False] * len(self._job_ids)
-        status_jobs = ['SUBMITTED'] * len(self._job_ids)
-        while not all(finished_jobs):
-            for i, jobid in enumerate(self._job_ids):
-                if finished_jobs[i]:
-                    continue
-                status = self._get_job_status(jobid)
-                if status in SLURM_FAIL_STATUS:
-                    raise RuntimeError('Job id {} failed with status {}.'.format(
-                        jobid, status))
-                if status in SLURM_WAIT_STATUS:
-                    continue
-                else:
-                    JOB_LOG.info('Job %s finished.', jobid)
-                    finished_jobs[i] = True
-                    status = 'FINISHED'
+        JOB_LOG.info('Starting busy wait on jobs %s',
+                     ' '.join(self.job_ids))
+        all_finished = False
 
-                status_jobs[i] = status
-
-            if all(finished_jobs):
+        while True:
+            all_finished = self._get_jobs_status()
+            if all_finished:
                 break
-
-            pending = [jid for jid, jdone in zip(self._job_ids, finished_jobs) if not jdone]
-            JOB_LOG.info('There are pending jobs: %s', ' '.join(pending))
             sleep(SLEEP_SECONDS)
 
-        JOB_LOG.info('Finished wait on jobs %s', ' '.join(self._job_ids))
-        return self._job_ids
+        JOB_LOG.info('Finished wait on jobs %s',
+                     ' '.join(self.job_ids))
+
+        # Run sacct to check the exit code of jobs
+
+        return job_ids
 
     def run_grouplevel(self):
         """
@@ -275,6 +302,10 @@ class CircleCISubmission(SherlockSubmission):
         'job_name': 'crn-bidsapp',
         'job_log': 'crn-bidsapp.log'
     }
+    _squeue_cmd = ['sshpass', '-p', 'testuser',
+                   'ssh', '-p', '10022', 'testuser@localhost',
+                   'squeue']
+
     def _generate_sbatch(self):
         """
         Generates one sbatch file per task
@@ -294,12 +325,6 @@ class CircleCISubmission(SherlockSubmission):
                 'sshpass', '-p', 'testuser',
                 'ssh', '-p', '10022', 'testuser@localhost',
                 'sbatch', task])
-
-    def _get_job_status(self, jobid):
-        return _run_cmd([
-            'sshpass', '-p', 'testuser',
-            'ssh', '-p', '10022', 'testuser@localhost',
-            'squeue', '-j', jobid, '-o', '%t', '-h']).strip()
 
 class TestSubmission(SherlockSubmission):
     """
@@ -321,7 +346,7 @@ class TestSubmission(SherlockSubmission):
         task = task.replace(os.path.expanduser('~/'), '/')
         return _run_cmd(['echo', '"Submitted batch job 49533"'])
 
-    def _get_job_status(self, jobid):
+    def _get_jobs_status(self):
         return _run_cmd(['echo', 'FINISHED']).strip()
 
 def _run_cmd(cmd, shell=False):
