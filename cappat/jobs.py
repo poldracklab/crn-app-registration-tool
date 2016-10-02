@@ -213,12 +213,11 @@ class Lonestar5Submission(TaskSubmissionBase):
             'jobname': self.slurm_settings['job_name']
         }
         launcher_cmd = """\
-\"export LAUNCHER_WORKDIR={cwd}; \
+export LAUNCHER_WORKDIR={cwd}; \
 /corral-repl/utexas/poldracklab/users/wtriplet/external/ls5_launch/launch -s {launcher_file} \
--n {ncpus} -N {nodes} -d {cwd} -r {runtime} -j {jobname}\"\
+-n {ncpus} -N {nodes} -d {cwd} -r {runtime} -j {jobname}\
 """.format(**values)
-        return _run_cmd(['ssh', '-oStrictHostKeyChecking=no', 'login2', launcher_cmd],
-                        shell=True)
+        return _run_cmd(['ssh', '-oStrictHostKeyChecking=no', 'login2', launcher_cmd])
 
 
 class SherlockSubmission(TaskSubmissionBase):
