@@ -30,7 +30,7 @@ def gethostname():
     """
     hostname = socket.gethostname()
 
-    if len(hostname.strip('.')) == 1 and hostname.startswith('login'):
+    if len(hostname.split('.')) == 1 and hostname.startswith('login'):
         # This is here because ls5 returns only the login node name 'loginN'
         fqdns = list(
             set([socket.getfqdn(i[4][0])
