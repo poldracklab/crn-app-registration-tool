@@ -15,7 +15,7 @@ import logging
 import pkg_resources as pkgr
 from cappat import AGAVE_JOB_LOGS
 from cappat.tpl import Template
-from cappat.utils import check_folder, gethostname
+from cappat.utils import check_folder, getsystemname
 
 SLURM_FAIL_STATUS = ['CA', 'F', 'TO', 'NF', 'SE']
 SLURM_WAIT_STATUS = ['R', 'PD', 'CF', 'CG']
@@ -38,7 +38,7 @@ class TaskManager(object):
         Get the appropriate TaskManager object
         """
         if hostname is None:
-            hostname = gethostname()
+            hostname = getsystemname()
 
         JOB_LOG.info('Identified host: "%s"', hostname)
 
@@ -46,7 +46,7 @@ class TaskManager(object):
             raise RuntimeError('Could not identify execution system')
 
         if hostname.endswith('ls5.tacc.utexas.edu'):
-            raise NotImplementedError
+            return Lonestar5Submission(task_list, slurm_settings, temp_folder)
         elif hostname.endswith('stanford.edu'):
             return SherlockSubmission(task_list, slurm_settings, temp_folder)
         elif hostname.endswith('stampede.tacc.utexas.edu'):

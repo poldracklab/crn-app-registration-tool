@@ -6,8 +6,8 @@
 Utilities: helper functions
 """
 import os
-import socket
 from os import path as op
+import socket
 from errno import EEXIST
 
 def check_folder(folder):
@@ -23,7 +23,7 @@ def check_folder(folder):
     return folder
 
 
-def gethostname():
+def getsystemname():
     """
     Queries the host name. If for some reason (i.e. ls5) it returns
     not enough information to identify the host, queries all the IPs

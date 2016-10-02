@@ -13,9 +13,9 @@ import cappat.utils as cu
             mock.Mock(return_value='ls5.tacc.utexas.edu'))
 @mock.patch('cappat.utils.socket.getaddrinfo',
             mock.Mock(return_value=[(2, 2, 17, '', ('192.168.0.24', 0))]))
-def test_gethostname():
+def test_getsystemname():
     """
     Mocks the return values in ls5, to ensure that this implementation
     of the hostname works fine
     """
-    assert cu.gethostname() == 'ls5.tacc.utexas.edu'
+    assert cu.getsystemname() == 'ls5.tacc.utexas.edu'
