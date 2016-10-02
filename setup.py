@@ -37,7 +37,7 @@ def main():
         download_url=ldict['DOWNLOAD_URL'],
         classifiers=ldict['CLASSIFIERS'],
         packages=find_packages(exclude=['build', 'doc', 'old-wrappers']),
-        package_data={'cappt.tpl': ["*.jnj2"]},
+        package_data={'cappt': ["tpl/*.jnj2"]},
         entry_points={'console_scripts': [
             'agave_wrapper=cappat.wrapper:main'
         ]},

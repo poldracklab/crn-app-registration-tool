@@ -73,7 +73,7 @@ class TaskSubmissionBase(object):
     }
     jobexp = re.compile(r'Submitted batch job (?P<jobid>\d*)')
 
-    SLURM_TEMPLATE = pkgr.resource_filename('cappat.tpl', 'sherlock-sbatch.jnj2')
+    SLURM_TEMPLATE = pkgr.resource_filename('cappat', 'tpl/sherlock-sbatch.jnj2')
 
     def __init__(self, task_list, slurm_settings=None, group_cmd=None, temp_folder=None):
 
@@ -143,6 +143,7 @@ class TaskSubmissionBase(object):
         """
         JOB_LOG.info('Starting busy wait on jobs %s', ' '.join(self._job_ids))
         finished_jobs = [False] * len(self._job_ids)
+        status_jobs = ['SUBMITTED'] * len(self._job_ids)
         while not all(finished_jobs):
             for i, jobid in enumerate(self._job_ids):
                 if finished_jobs[i]:
@@ -156,6 +157,9 @@ class TaskSubmissionBase(object):
                 else:
                     JOB_LOG.info('Job %s finished.', jobid)
                     finished_jobs[i] = True
+                    status = 'FINISHED'
+
+                status_jobs[i] = status
 
             if all(finished_jobs):
                 break

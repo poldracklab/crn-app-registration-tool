@@ -13,7 +13,7 @@
 #SBATCH --mem-per-cpu={{mem_per_cpu}}
 {% endif %}
 {% if qos %}
-#SBATCH -q {{qos}}
+#SBATCH --qos={{qos}}
 {% endif %}
 {% if job_log %}
 #SBATCH -o {{job_log}}.out
