@@ -197,7 +197,7 @@ class Lonestar5Submission(TaskSubmissionBase):
         """
         launcher_file = op.join(self.temp_folder, 'launch_script.sh')
         with open(launcher_file, 'w') as lfh:
-            lfh.write('\n'.join(self.task_list))
+            lfh.write('\n'.join(self.task_list) + '\n')
         return [launcher_file]
 
     def _submit_sbatch(self, task):
@@ -217,7 +217,8 @@ class Lonestar5Submission(TaskSubmissionBase):
 /corral-repl/utexas/poldracklab/users/wtriplet/external/ls5_launch/launch -s {launcher_file} \
 -n {ncpus} -N {nodes} -d {cwd} -r {runtime} -j {jobname}\"\
 """.format(**values)
-        return _run_cmd(['ssh', '-oStrictHostKeyChecking=no', 'login2', launcher_cmd])
+        return _run_cmd(['ssh', '-oStrictHostKeyChecking=no', 'login2', launcher_cmd],
+                        shell=True)
 
 
 class SherlockSubmission(TaskSubmissionBase):
@@ -320,10 +321,10 @@ class TestSubmission(SherlockSubmission):
     def _get_job_status(self, jobid):
         return _run_cmd(['echo', 'FINISHED']).strip()
 
-def _run_cmd(cmd):
+def _run_cmd(cmd, shell=False):
     JOB_LOG.info('Executing command line: %s', ' '.join(cmd))
     try:
-        result = check_output(cmd, stderr=STDOUT)
+        result = check_output(cmd, stderr=STDOUT, shell=shell)
     except CalledProcessError as error:
         JOB_LOG.critical('Error submitting (exit code %d): \n\tCmdline: %s\n\tOutput:\n\t%s',
                          error.returncode, ' '.join(cmd), error.output)
