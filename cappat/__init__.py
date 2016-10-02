@@ -23,5 +23,5 @@ from .info import (
     __longdesc__
 )
 
-AGAVE_JOB_LOGS = 'logs/'
+AGAVE_JOB_LOGS = 'log/'
 AGAVE_JOB_OUTPUT = 'out/'
