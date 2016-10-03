@@ -1,11 +1,11 @@
-FROM agaveapi/centos-base
+FROM agaveapi/centos-base:latest
 
 # Add slurm user
 RUN adduser slurm && \
     echo "slurm:slurm" | chpasswd
 USER slurm
 RUN mkdir /home/slurm/.ssh
-ADD ssh/id_rsa.pub /home/slurm/.ssh/authorized_keys
+COPY ssh/id_rsa.pub /home/slurm/.ssh/authorized_keys
 USER root
 
 # Install slurm
@@ -41,20 +41,17 @@ RUN ./configure --prefix=/usr --sysconfdir=/etc/sysconfig/slurm --with-mysql_con
     chown root:slurm /var/spool && \
     chmod g+w /var/spool
 
-ADD slurm/slurm.conf /etc/sysconfig/slurm/slurm.conf
+COPY slurm/slurm.conf /etc/sysconfig/slurm/slurm.conf
 USER testuser
-ADD slurm/slurm-child.submit /home/testuser/slurm-child.submit
-ADD slurm/slurm-parent.submit /home/testuser/slurm-parent.submit
+COPY slurm/slurm-child.submit /home/testuser/slurm-child.submit
+COPY slurm/slurm-parent.submit /home/testuser/slurm-parent.submit
 
 USER root
 RUN chown testuser:testuser /home/testuser/slurm-child.submit
 RUN chown testuser:testuser /home/testuser/slurm-parent.submit
-ADD supervisord.conf /etc/supervisord.conf
+COPY supervisord.conf /etc/supervisord.conf
 RUN mkdir /var/log/supervisor
 RUN chmod -R 777 /var/log/supervisor
-
-ADD slurm/testapp.sh /usr/bin/testapp
-RUN chmod +x /usr/bin/testapp
 
 EXPOSE 10389 22 6817 6818
 CMD /usr/bin/supervisord

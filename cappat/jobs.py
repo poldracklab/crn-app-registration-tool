@@ -72,7 +72,7 @@ class TaskSubmissionBase(object):
         'job_log': 'crn-bidsapp.log'
     }
     jobexp = re.compile(r'Submitted batch job (?P<jobid>\d*)')
-    _squeue_cmd = ['squeue']
+    _cmd_prefix = []
 
     SLURM_TEMPLATE = pkgr.resource_filename('cappat', 'tpl/sherlock-sbatch.jnj2')
 
@@ -124,14 +124,14 @@ class TaskSubmissionBase(object):
         raise NotImplementedError
 
     def _submit_sbatch(self, task):
-        raise NotImplementedError
+        return _run_cmd(self._cmd_prefix + ['sbatch', task])
 
     def _get_job_acct(self):
         # sacct -n -X -j 10016750,10016749 -o JobID,State,ExitCode
         job_ids = list(self._jobs.keys())
         JOB_LOG.info('Checking exit code of jobs %s', ' '.join(job_ids))
 
-        results = _run_cmd([
+        results = _run_cmd(self._cmd_prefix + [
             'sacct', '-n', '-X', '-j', ','.join(job_ids),
             '-o', 'JobID,State,ExitCode'])
 
@@ -149,8 +149,8 @@ class TaskSubmissionBase(object):
         return exit_codes
 
     def _get_jobs_status(self):
-        statuses = _run_cmd(self._squeue_cmd + ['-j', ','.join(self.job_ids),
-                            '-o', '%i,%t', '-h'])
+        statuses = _run_cmd(self._cmd_prefix + [
+            'squeue', '-j', ','.join(self.job_ids), '-o', '%i,%t', '-h'])
 
         # Jobs are not in the queue anymore
         if statuses is None:
@@ -302,9 +302,6 @@ class SherlockSubmission(TaskSubmissionBase):
             conf.generate_conf(slurm_settings, sbatch_files[-1])
         return sbatch_files
 
-    def _submit_sbatch(self, task):
-        return _run_cmd(['sbatch', task])
-
 
 class CircleCISubmission(SherlockSubmission):
     """
@@ -317,15 +314,14 @@ class CircleCISubmission(SherlockSubmission):
         'job_name': 'crn-bidsapp',
         'job_log': 'crn-bidsapp.log'
     }
-    _squeue_cmd = ['sshpass', '-p', 'testuser',
-                   'ssh', '-p', '10022', 'testuser@localhost',
-                   'squeue']
+    _cmd_prefix = ['sshpass', '-p', 'testuser',
+                   'ssh', '-p', '10022', 'testuser@localhost']
 
     def _generate_sbatch(self):
         """
         Generates one sbatch file per task
         """
-        # Remove default settings of Sherlock not supported
+        # Remove default settings of Sherlock which are unsupported
         self.slurm_settings.pop('qos', None)
         self.slurm_settings.pop('mincpus', None)
         self.slurm_settings.pop('mem_per_cpu', None)
@@ -336,10 +332,7 @@ class CircleCISubmission(SherlockSubmission):
         # Fix paths for docker image in CircleCI
         task = task.replace(os.path.expanduser('~/'), '/')
         task = task.replace('~/', '/')
-        return _run_cmd([
-                'sshpass', '-p', 'testuser',
-                'ssh', '-p', '10022', 'testuser@localhost',
-                'sbatch', task])
+        return super(CircleCISubmission, self)._submit_sbatch(task)
 
 class TestSubmission(SherlockSubmission):
     """
