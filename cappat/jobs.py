@@ -135,6 +135,11 @@ class TaskSubmissionBase(object):
             'sacct', '-n', '-X', '-j', ','.join(job_ids),
             '-o', 'JobID,State,ExitCode'])
 
+        if results is None:
+            JOB_LOG.critical('Running sacct over jobs %s did not produce any output',
+                             ', '.join(job_ids))
+            raise RuntimeError('sacct command output is empty')
+
         #parse results
         exit_codes = []
         for line in results.split('\n'):
@@ -145,14 +150,18 @@ class TaskSubmissionBase(object):
 
     def _get_jobs_status(self):
         statuses = _run_cmd(self._squeue_cmd + ['-j', ','.join(self.job_ids),
-                            '-o', '%i,%t', '-h']).split('\n')
+                            '-o', '%i,%t', '-h'])
 
         # Jobs are not in the queue anymore
-        if not statuses or statuses[0].endswith('Invalid job id specified'):
+        if statuses is None:
+            return True
+
+        statuses = statuses.split('\n')
+        if statuses[0].endswith('Invalid job id specified'):
             return True
 
         pending = []
-        for line in statuses:
+        for line in statuses.split('\n'):
             status = line.strip(',')
             if len(status) < 2:
                 raise RuntimeError('Error parsing squeue output: {}'.format(
@@ -364,11 +373,13 @@ def _run_cmd(cmd, shell=False):
                          error.returncode, ' '.join(cmd), error.output)
         raise
     result = '\n'.join([line for line in result.split('\n') if line.strip()])
-    if result:
-        JOB_LOG.info('Command output: \n%s', result)
-    else:
+    if not result:
         JOB_LOG.info('Command output was empty')
+        return None
+
+    JOB_LOG.info('Command output: \n%s', result)
     return result
+
 
 def _time2secs(timestr):
     return sum((60**i) * int(t) for i, t in enumerate(reversed(timestr.split(':'))))
