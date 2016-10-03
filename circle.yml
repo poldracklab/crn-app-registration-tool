@@ -40,7 +40,7 @@ test:
     - sshpass -p testuser ssh -p 10022 testuser@localhost sbatch /home/testuser/slurm-parent.submit && sleep 30s && sshpass -p testuser ssh -p 10022 testuser@localhost cat /home/testuser/slurm-child.out
 
   post:
-    - sshpass -p testuser scp -r -p10022 testuser@localhost:/home/testuser/* $SCRATCH/testuser/
+    - sshpass -p testuser scp -r -P 10022 testuser@localhost:/home/testuser/* $SCRATCH/testuser/
 
 general:
   artifacts:
