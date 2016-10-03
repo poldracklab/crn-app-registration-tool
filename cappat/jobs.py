@@ -144,12 +144,11 @@ class TaskSubmissionBase(object):
         return exit_codes
 
     def _get_jobs_status(self):
-        statuses = [line for line in _run_cmd(
-            self._squeue_cmd + ['-j', ','.join(self.job_ids), '-o', '%i,%t', '-h']).split('\n')
-            if line]
+        statuses = _run_cmd(self._squeue_cmd + ['-j', ','.join(self.job_ids),
+                            '-o', '%i,%t', '-h']).split('\n')
 
         # Jobs are not in the queue anymore
-        if statuses[0].endswith('Invalid job id specified'):
+        if not statuses or statuses[0].endswith('Invalid job id specified'):
             return True
 
         pending = []
@@ -364,7 +363,11 @@ def _run_cmd(cmd, shell=False):
         JOB_LOG.critical('Error submitting (exit code %d): \n\tCmdline: %s\n\tOutput:\n\t%s',
                          error.returncode, ' '.join(cmd), error.output)
         raise
-    JOB_LOG.info('Command output: \n%s', result)
+    result = '\n'.join([line for line in result.split('\n') if line.strip()])
+    if result:
+        JOB_LOG.info('Command output: \n%s', result)
+    else:
+        JOB_LOG.info('Command output was empty')
     return result
 
 def _time2secs(timestr):
