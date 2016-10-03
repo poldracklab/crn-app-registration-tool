@@ -20,7 +20,7 @@ dependencies:
 
   pre:
     # Let CircleCI cache the apt archive
-    - mkdir -p $SCRATCH $SCRATCH/slurm $SCRATCH/testwrapper $SCRATCH/testuser
+    - mkdir -p $SCRATCH $SCRATCH/slurm $SCRATCH/testwrapper $SCRATCH/circleci
     - mkdir -p ~/.apt-cache/partial; sudo rm -rf /var/cache/apt/archives; sudo ln -s ~/.apt-cache /var/cache/apt/archives
     - ln -s $HOME/crn-app-registration-tool/script/wrapper.sh $SCRATCH/testwrapper/wrapper.sh; cat $SCRATCH/testwrapper/wrapper.sh
 
@@ -37,10 +37,10 @@ test:
   override:
     - py.test -rw -vv -n 16 --junitxml=${CIRCLE_TEST_REPORTS}/tests.xml
     - cd $SCRATCH/testwrapper; ./wrapper.sh
-    - sshpass -p testuser ssh -p 10022 testuser@localhost sbatch /home/testuser/slurm-parent.submit && sleep 30s && sshpass -p testuser ssh -p 10022 testuser@localhost cat /home/testuser/slurm-child.out
+    - sshpass -p testpass ssh -p 10022 circleci@localhost sbatch /home/circleci/slurm-parent.submit && sleep 30s && sshpass -p testpass ssh -p 10022 circleci@localhost cat /home/circleci/slurm-child.out
 
   post:
-    - sshpass -p testuser scp -r -P 10022 testuser@localhost:/home/testuser/* $SCRATCH/testuser/
+    - sshpass -p testpass scp -r -P 10022 circleci@localhost:/home/circleci/* $SCRATCH/circleci/
 
 general:
   artifacts:

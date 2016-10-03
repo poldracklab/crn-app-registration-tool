@@ -315,8 +315,8 @@ class CircleCISubmission(SherlockSubmission):
         'job_name': 'crn-bidsapp',
         'job_log': 'crn-bidsapp.log'
     }
-    _cmd_prefix = ['sshpass', '-p', 'testuser',
-                   'ssh', '-p', '10022', 'testuser@localhost']
+    _cmd_prefix = ['sshpass', '-p', 'testpass',
+                   'ssh', '-p', '10022', 'circleci@localhost']
 
     def _generate_sbatch(self):
         """

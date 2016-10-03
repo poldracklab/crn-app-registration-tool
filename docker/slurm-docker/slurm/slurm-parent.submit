@@ -6,4 +6,4 @@
 #SBATCH -p debug
 #SBATCH -n 1
 
-sbatch /home/testuser/slurm-child.submit
+sbatch slurm-child.submit

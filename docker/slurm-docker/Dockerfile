@@ -42,13 +42,17 @@ RUN ./configure --prefix=/usr --sysconfdir=/etc/sysconfig/slurm --with-mysql_con
     chmod g+w /var/spool
 
 COPY slurm/slurm.conf /etc/sysconfig/slurm/slurm.conf
-USER testuser
-COPY slurm/slurm-child.submit /home/testuser/slurm-child.submit
-COPY slurm/slurm-parent.submit /home/testuser/slurm-parent.submit
+
+RUN ENCPASS=$( echo "testpass" | openssl passwd -1 -stdin); \
+    useradd -p $ENCPASS -U -m -G users,testuser -u 1000 -s /bin/bash circleci
+
+USER circleci
+COPY slurm/slurm-child.submit /home/circleci/slurm-child.submit
+COPY slurm/slurm-parent.submit /home/circleci/slurm-parent.submit
 
 USER root
-RUN chown testuser:testuser /home/testuser/slurm-child.submit
-RUN chown testuser:testuser /home/testuser/slurm-parent.submit
+RUN chown circleci:circleci /home/circleci/slurm-child.submit
+RUN chown circleci:circleci /home/circleci/slurm-parent.submit
 COPY supervisord.conf /etc/supervisord.conf
 RUN mkdir /var/log/supervisor
 RUN chmod -R 777 /var/log/supervisor
