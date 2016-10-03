@@ -90,6 +90,7 @@ class TaskSubmissionBase(object):
             temp_folder = AGAVE_JOB_LOGS
 
         self.temp_folder = check_folder(op.abspath(temp_folder))
+        self.slurm_settings['job_log'] = op.join(self.temp_folder, slurm_settings['job_log'])
         self.sbatch_files = self._generate_sbatch()
         self._jobs = {}
         self._group_cmd = group_cmd
@@ -207,6 +208,7 @@ class TaskSubmissionBase(object):
         JOB_LOG.info('Finished wait on jobs %s',
                      ' '.join(self.job_ids))
 
+        sleep(10)
         # Run sacct to check the exit code of jobs
         overall_exit = sum(self._get_job_acct())
 
@@ -331,11 +333,15 @@ class CircleCISubmission(SherlockSubmission):
         self.slurm_settings.pop('mincpus', None)
         self.slurm_settings.pop('mem_per_cpu', None)
         self.slurm_settings.pop('modules', None)
+        self.slurm_settings['job_log'] = self.slurm_settings['job_log'].replace(
+            op.expanduser('~/'), '/')
+        self.slurm_settings['job_log'] = self.slurm_settings['job_log'].replace(
+            '~/', '/')
         return super(CircleCISubmission, self)._generate_sbatch()
 
     def _submit_sbatch(self, task):
         # Fix paths for docker image in CircleCI
-        task = task.replace(os.path.expanduser('~/'), '/')
+        task = task.replace(op.expanduser('~/'), '/')
         task = task.replace('~/', '/')
         return super(CircleCISubmission, self)._submit_sbatch(task)
 
