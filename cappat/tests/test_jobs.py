@@ -5,7 +5,7 @@
 
 import os
 from glob import glob
-# import mock
+import mock
 # import pytest
 from cappat import jobs as cj
 
@@ -16,25 +16,36 @@ JOB_SETTINGS = {
     'mem_per_cpu': 4000,
     'partition': 'debug',
     'job_name': 'testjob',
-    'job_log': '/scratch/slurm/test-slurm-job',
     'modules': []
 }
 
 
 def test_job_creation():
-    tasks = ['testapp ~/Data out/ participant --participant_label '
-             '10 11 12 -w work/sjob-0000']
+    tasks = ['echo "Submitted batch job 49533"',
+             'echo "Submitted batch job 49534"']
 
     slurm = cj.TaskManager.build(tasks, JOB_SETTINGS,
-                                 temp_folder=os.path.expanduser('~/scratch/slurm'))
+                                 work_dir=os.path.expanduser('~/scratch/slurm-1'))
     slurm.map_participant()
-    assert len(slurm.job_ids) == 1
+    assert len(slurm.job_ids) == 2
 
 def test_job_run():
-    tasks = ['testapp ~/Data out/ participant --participant_label '
-             '10 11 12 -w work/sjob-0000']
-
+    tasks = ['echo "Submitted batch job 49533"',
+             'echo "Submitted batch job 49534"',
+             'echo "Submitted batch job 49535"']
     slurm = cj.TaskManager.build(tasks, JOB_SETTINGS,
-                                 temp_folder=os.path.expanduser('~/scratch/slurm'))
+                                 work_dir=os.path.expanduser('~/scratch/slurm-2'))
     slurm.map_participant()
-    assert len(slurm.wait_participant()) == 1
+    assert len(slurm.wait_participant()) == 3
+
+# @mock.patch('cappat.jobs.TestSubmission._get_jobs_status',
+#             mock.Mock(return_value=True))
+# @mock.patch('cappat.jobs.TestSubmission._run_sacct',
+#             mock.Mock(return_value='49533   FAILED   113:0'))
+# def test_job_fail():
+#     tasks = ['echo "Submitted batch job 49533"']
+
+#     slurm = cj.TaskManager.build(tasks, JOB_SETTINGS,
+#                                  work_dir=os.path.expanduser('~/scratch/slurm-3'))
+#     slurm.map_participant()
+#     slurm.wait_participant()

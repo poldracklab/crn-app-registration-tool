@@ -66,7 +66,7 @@ def get_task_list(bids_dir, app_name, subject_list, group_size=1, *args):
             app_name, bids_dir, AGAVE_JOB_OUTPUT, ' '.join(part_group),
             '-w work/sjob-{:04d}'.format(i))
         if args:
-            task_str +=  ' ' + ' '.join(args)
+            task_str += ' ' + ' '.join(args)
         task_list.append(task_str)
 
     wlogger.info('Task list: \n\t%s', '\n\t'.join(task_list))

@@ -4,6 +4,8 @@
 #SBATCH -t {{time}}
 #SBATCH -p {{partition}}
 #SBATCH -D {{work_dir}}
+#SBATCH -o log/bidsapp-%j.out
+#SBATCH -e log/bidsapp-%j.err
 {% if job_name %}
 #SBATCH -J {{job_name}}
 {% endif %}
@@ -16,11 +18,7 @@
 {% if qos %}
 #SBATCH --qos={{qos}}
 {% endif %}
-{% if job_log %}
-#SBATCH -o {{job_log}}.out
-#SBATCH -e {{job_log}}.err
-{% endif %}
 {% if modules %}{% for m in modules %}
 module {{m}}
 {% endfor %}{% endif %}
-srun {{commandline}}
+{% if srun_cmd %}{{ srun_cmd }} {% endif %}{{commandline}}

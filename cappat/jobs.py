@@ -32,7 +32,7 @@ class TaskManager(object):
         raise RuntimeError('This class cannot be instatiated.')
 
     @staticmethod
-    def build(task_list, slurm_settings=None, temp_folder=None,
+    def build(task_list, slurm_settings=None, work_dir=None,
               hostname=None):
         """
         Get the appropriate TaskManager object
@@ -44,15 +44,15 @@ class TaskManager(object):
             raise RuntimeError('Could not identify execution system')
 
         if hostname.endswith('ls5.tacc.utexas.edu'):
-            return Lonestar5Submission(task_list, slurm_settings, temp_folder)
+            return Lonestar5Submission(task_list, slurm_settings, work_dir)
         elif hostname.endswith('stanford.edu'):
-            return SherlockSubmission(task_list, slurm_settings, temp_folder)
+            return SherlockSubmission(task_list, slurm_settings, work_dir)
         elif hostname.endswith('stampede.tacc.utexas.edu'):
             raise NotImplementedError
         elif hostname == 'test.circleci':
-            return CircleCISubmission(task_list, slurm_settings, temp_folder)
+            return CircleCISubmission(task_list, slurm_settings, work_dir)
         elif hostname == 'test.local':
-            return TestSubmission(task_list, slurm_settings, temp_folder)
+            return TestSubmission(task_list, slurm_settings, work_dir)
         else:
             raise RuntimeError(
                 'Could not identify "{}" as a valid execution system'.format(hostname))
@@ -72,7 +72,7 @@ class TaskSubmissionBase(object):
 
     SLURM_TEMPLATE = pkgr.resource_filename('cappat', 'tpl/sherlock-sbatch.jnj2')
 
-    def __init__(self, task_list, slurm_settings=None, group_cmd=None, temp_folder=None):
+    def __init__(self, task_list, slurm_settings=None, group_cmd=None, work_dir=None):
 
         if not task_list:
             raise RuntimeError('a list of tasks is required')
@@ -82,11 +82,14 @@ class TaskSubmissionBase(object):
         if slurm_settings is not None:
             self.slurm_settings.update(slurm_settings)
 
-        if temp_folder is None:
-            temp_folder = AGAVE_JOB_LOGS
+        if work_dir is None:
+            work_dir = os.getcwd()
 
-        self.temp_folder = check_folder(op.abspath(temp_folder))
-        self.slurm_settings['work_dir'] = self.temp_folder
+        self.work_dir = check_folder(op.abspath(work_dir))
+        self.aux_dir = check_folder(op.join(self.work_dir, AGAVE_JOB_LOGS))
+        self.slurm_settings.update(
+            {'work_dir': self.work_dir, 'aux_dir': self.aux_dir}
+        )
         self.sbatch_files = self._generate_sbatch()
         self._jobs = {}
         self._group_cmd = group_cmd
@@ -123,18 +126,19 @@ class TaskSubmissionBase(object):
     def _submit_sbatch(self, task):
         return _run_cmd(self._cmd_prefix + ['sbatch', task])
 
-    def _get_job_acct(self):
+    def _run_sacct(self):
         # sacct -n -X -j 10016750,10016749 -o JobID,State,ExitCode
-        job_ids = list(self._jobs.keys())
-        JOB_LOG.info('Checking exit code of jobs %s', ' '.join(job_ids))
-
-        results = _run_cmd(self._cmd_prefix + [
-            'sacct', '-n', '-X', '-j', ','.join(job_ids),
+        return _run_cmd(self._cmd_prefix + [
+            'sacct', '-n', '-X', '-j', ','.join(self.job_ids),
             '-o', 'JobID,State,ExitCode'])
+
+    def _get_job_acct(self):
+        JOB_LOG.info('Checking exit code of jobs %s', ' '.join(self.job_ids))
+        results = self._run_sacct()
 
         if results is None:
             JOB_LOG.critical('Running sacct over jobs %s did not produce any output',
-                             ', '.join(job_ids))
+                             ', '.join(self.job_ids))
             raise RuntimeError('sacct command output is empty')
 
         #parse results
@@ -195,16 +199,13 @@ class TaskSubmissionBase(object):
                      ' '.join(self.job_ids))
         all_finished = False
 
-        while True:
+        while not all_finished:
             all_finished = self._get_jobs_status()
-            if all_finished:
-                break
             sleep(SLEEP_SECONDS)
 
         JOB_LOG.info('Finished wait on jobs %s',
                      ' '.join(self.job_ids))
 
-        sleep(10)
         # Run sacct to check the exit code of jobs
         overall_exit = sum(self._get_job_acct())
 
@@ -212,7 +213,10 @@ class TaskSubmissionBase(object):
             '%s (%s)' % (k, v) for k, v in list(self._jobs.items())]))
 
         if overall_exit > 0:
-            JOB_LOG.critical('One or more tasks finished with non-zero code')
+            failed_jobs = ['%s (logfiles: log/bidsapp-%s.{err,out}).' % k for k, v in list(
+                self._jobs.items()) if v != 'COMPLETED']
+            JOB_LOG.critical('One or more tasks finished with non-zero code:\n%s\t',
+                             '\n\t'.join(failed_jobs))
             raise RuntimeError('One or more tasks finished with non-zero code')
         return self.job_ids
 
@@ -243,7 +247,7 @@ class Lonestar5Submission(TaskSubmissionBase):
         """
         Generates one launcher file
         """
-        launcher_file = op.join(self.temp_folder, 'launch_script.sh')
+        launcher_file = op.join(self.aux_dir, 'launch_script.sh')
         with open(launcher_file, 'w') as lfh:
             lfh.write('\n'.join(self.task_list) + '\n')
         return [launcher_file]
@@ -281,14 +285,15 @@ class SherlockSubmission(TaskSubmissionBase):
         'partition': 'russpold',
         'qos': 'russpold',
         'job_name': 'crn-bidsapp',
+        'srun_cmd': 'sbatch'
     }
 
-    def __init__(self, task_list, slurm_settings=None, temp_folder=None):
+    def __init__(self, task_list, slurm_settings=None, work_dir=None):
         if not slurm_settings is None:
             self.slurm_settings.update(slurm_settings)
         self.slurm_settings['qos'] = self.slurm_settings['partition']
         super(SherlockSubmission, self).__init__(
-            task_list, temp_folder=temp_folder)
+            task_list, work_dir=work_dir)
 
     def _generate_sbatch(self):
         """
@@ -297,7 +302,7 @@ class SherlockSubmission(TaskSubmissionBase):
         slurm_settings = self.slurm_settings.copy()
         sbatch_files = []
         for i, task in enumerate(self.task_list):
-            sbatch_files.append(op.join(self.temp_folder, 'slurm-%06d.sbatch' % i))
+            sbatch_files.append(op.join(self.aux_dir, 'slurm-%06d.sbatch' % i))
             slurm_settings['commandline'] = task
             conf = Template(self.SLURM_TEMPLATE)
             conf.generate_conf(slurm_settings, sbatch_files[-1])
@@ -312,8 +317,7 @@ class CircleCISubmission(SherlockSubmission):
         'nodes': 1,
         'time': '01:00:00',
         'partition': 'debug',
-        'job_name': 'crn-bidsapp',
-        'job_log': 'crn-bidsapp.log'
+        'job_name': 'crn-bidsapp'
     }
     _cmd_prefix = ['sshpass', '-p', 'testpass',
                    'ssh', '-p', '10022', 'circleci@localhost']
@@ -352,16 +356,18 @@ class TestSubmission(SherlockSubmission):
         self.slurm_settings.pop('mincpus', None)
         self.slurm_settings.pop('mem_per_cpu', None)
         self.slurm_settings.pop('modules', None)
+        self.slurm_settings.pop('srun_cmd', None)
         return super(TestSubmission, self)._generate_sbatch()
 
     def _submit_sbatch(self, task):
-        return _run_cmd(['echo', '"Submitted batch job 49533"'])
+        return _run_cmd(['/bin/bash', task])
 
     def _get_jobs_status(self):
-        return _run_cmd(['echo', 'FINISHED']).strip()
+        jobs = ['%s,COMPLETED' % j for j in self.job_ids]
+        return _run_cmd(['echo', '\n'.join(jobs)]).strip()
 
-    def _get_job_acct(self):
-        return [0] * len(self.job_ids)
+    def _run_sacct(self):
+        return '\n'.join(['%s  COMPLETED  0:0' % j for j in self.job_ids])
 
 def _run_cmd(cmd, shell=False):
     JOB_LOG.info('Executing command line: %s', ' '.join(cmd))
