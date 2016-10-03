@@ -33,7 +33,7 @@ dependencies:
     - docker pull poldracklab/slurm:latest
     - mkdir -p ~/docker; docker save poldracklab/slurm:latest > ~/docker/image.tar
     - mkdir -p ~/data; if [[ ! -d ${bidsFolder} ]]; then wget -q --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -O ds003_downsampled.tar.gz "${DS003_URL}" && tar xzf ds003_downsampled.tar.gz -C ~/data/; fi
-    - docker run -v $SCRATCH:/scratch -v $HOME/testuser/testuser:/home/testuser -p 10022:22 -d poldracklab/slurm:latest && sleep 10s
+    - docker run -v $SCRATCH:/scratch -v $HOME/testuser:/home/testuser -p 10022:22 -d poldracklab/slurm:latest && sleep 10s
 test:
   override:
     - py.test -rw -vv -n 16 --junitxml=${CIRCLE_TEST_REPORTS}/tests.xml
