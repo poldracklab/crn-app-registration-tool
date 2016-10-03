@@ -162,7 +162,7 @@ class TaskSubmissionBase(object):
 
         pending = []
         for line in statuses:
-            status = line.strip(',')
+            status = line.split(',')
             if len(status) < 2:
                 raise RuntimeError('Error parsing squeue output: {}'.format(
                     line))

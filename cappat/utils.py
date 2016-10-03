@@ -28,10 +28,12 @@ def getsystemname():
     Queries the host name. If for some reason (i.e. ls5) it returns
     not enough information to identify the host, queries all the IPs
     """
-    hostname = socket.gethostname()
+    hostname = os.getenv('AGAVE_EXECUTION_SYSTEM')
 
-    if '.' not in hostname:
-        hostname = os.getenv('AGAVE_EXECUTION_SYSTEM', hostname)
+    if hostname is not None:
+        return hostname
+
+    hostname = socket.gethostname()
 
     if '.' not in hostname:
         # This is here because ls5 returns only the node name
