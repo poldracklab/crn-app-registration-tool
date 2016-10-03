@@ -38,14 +38,14 @@ def test_job_run():
     slurm.map_participant()
     assert len(slurm.wait_participant()) == 3
 
-# @mock.patch('cappat.jobs.TestSubmission._get_jobs_status',
-#             mock.Mock(return_value=True))
-# @mock.patch('cappat.jobs.TestSubmission._run_sacct',
-#             mock.Mock(return_value='49533   FAILED   113:0'))
-# def test_job_fail():
-#     tasks = ['echo "Submitted batch job 49533"']
+@mock.patch('cappat.jobs.TestSubmission._get_jobs_status',
+            mock.Mock(return_value=True))
+@mock.patch('cappat.jobs.TestSubmission._run_sacct',
+            mock.Mock(return_value='49533   FAILED   113:0'))
+def test_job_fail():
+    tasks = ['echo "Submitted batch job 49533"']
 
-#     slurm = cj.TaskManager.build(tasks, JOB_SETTINGS,
-#                                  work_dir=os.path.expanduser('~/scratch/slurm-3'))
-#     slurm.map_participant()
-#     slurm.wait_participant()
+    slurm = cj.TaskManager.build(tasks, JOB_SETTINGS,
+                                 work_dir=os.path.expanduser('~/scratch/slurm-3'))
+    slurm.map_participant()
+    slurm.wait_participant()
