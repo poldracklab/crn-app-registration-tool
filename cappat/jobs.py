@@ -37,9 +37,7 @@ class TaskManager(object):
         """
         Get the appropriate TaskManager object
         """
-        if hostname is None:
-            hostname = getsystemname()
-
+        hostname = getsystemname()
         JOB_LOG.info('Identified host: "%s"', hostname)
 
         if not hostname:
@@ -90,7 +88,7 @@ class TaskSubmissionBase(object):
             temp_folder = AGAVE_JOB_LOGS
 
         self.temp_folder = check_folder(op.abspath(temp_folder))
-        self.slurm_settings['job_log'] = op.join(self.temp_folder, slurm_settings['job_log'])
+        self.slurm_settings['job_log'] = op.join(self.temp_folder, self.slurm_settings['job_log'])
         self.sbatch_files = self._generate_sbatch()
         self._jobs = {}
         self._group_cmd = group_cmd
