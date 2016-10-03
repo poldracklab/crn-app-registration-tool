@@ -53,5 +53,8 @@ COPY supervisord.conf /etc/supervisord.conf
 RUN mkdir /var/log/supervisor
 RUN chmod -R 777 /var/log/supervisor
 
+COPY testapp.sh /usr/bin/testapp
+RUN chmod +x /usr/bin/testapp
+
 EXPOSE 10389 22 6817 6818
 CMD /usr/bin/supervisord
