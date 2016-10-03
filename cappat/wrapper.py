@@ -62,10 +62,12 @@ def get_task_list(bids_dir, app_name, subject_list, group_size=1, *args):
 
     task_list = []
     for i, part_group in enumerate(groups):
-        task_list.append(
-            '{0} {1} {2} participant --participant_label {3} {4} {5}'.format(
+        task_str = '{0} {1} {2} participant --participant_label {3} {4}'.format(
             app_name, bids_dir, AGAVE_JOB_OUTPUT, ' '.join(part_group),
-            '-w work/sjob-{:04d}'.format(i), ' '.join(args)))
+            '-w work/sjob-{:04d}'.format(i))
+        if args:
+            task_str +=  ' ' + ' '.join(args)
+        task_list.append(task_str)
 
     wlogger.info('Task list: \n\t%s', '\n\t'.join(task_list))
     return task_list

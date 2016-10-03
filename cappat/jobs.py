@@ -365,6 +365,9 @@ class TestSubmission(SherlockSubmission):
     def _get_jobs_status(self):
         return _run_cmd(['echo', 'FINISHED']).strip()
 
+    def _get_job_acct(self):
+        return [0] * len(self.job_ids)
+
 def _run_cmd(cmd, shell=False):
     JOB_LOG.info('Executing command line: %s', ' '.join(cmd))
     try:

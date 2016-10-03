@@ -57,12 +57,12 @@ def test_get_subject_list_part(data, participant_label, no_random, expected):
 
 
 @pytest.mark.parametrize("group_size,expected", [
-    (3, ['testapp ~/Data out/ participant --participant_label 10 11 12 -w work/sjob-0000  >> log/sjob-0000.log']),
-    (2, ['testapp ~/Data out/ participant --participant_label 10 11 -w work/sjob-0000  >> log/sjob-0000.log',
-         'testapp ~/Data out/ participant --participant_label 12 -w work/sjob-0001  >> log/sjob-0001.log']),
-    (1, ['testapp ~/Data out/ participant --participant_label 10 -w work/sjob-0000  >> log/sjob-0000.log',
-         'testapp ~/Data out/ participant --participant_label 11 -w work/sjob-0001  >> log/sjob-0001.log',
-         'testapp ~/Data out/ participant --participant_label 12 -w work/sjob-0002  >> log/sjob-0002.log'])
+    (3, ['testapp ~/Data out/ participant --participant_label 10 11 12 -w work/sjob-0000']),
+    (2, ['testapp ~/Data out/ participant --participant_label 10 11 -w work/sjob-0000',
+         'testapp ~/Data out/ participant --participant_label 12 -w work/sjob-0001']),
+    (1, ['testapp ~/Data out/ participant --participant_label 10 -w work/sjob-0000',
+         'testapp ~/Data out/ participant --participant_label 11 -w work/sjob-0001',
+         'testapp ~/Data out/ participant --participant_label 12 -w work/sjob-0002'])
 ])
 def test_get_task_list(group_size, expected):
     assert cw.get_task_list('~/Data', 'testapp', ['10', '11', '12'], group_size=group_size) == expected
