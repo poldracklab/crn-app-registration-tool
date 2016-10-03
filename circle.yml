@@ -20,7 +20,7 @@ dependencies:
 
   pre:
     # Let CircleCI cache the apt archive
-    - mkdir -p $SCRATCH $SCRATCH/slurm $SCRATCH/testwrapper
+    - mkdir -p $SCRATCH $SCRATCH/slurm $SCRATCH/testwrapper $SCRATCH/testuser
     - mkdir -p ~/.apt-cache/partial; sudo rm -rf /var/cache/apt/archives; sudo ln -s ~/.apt-cache /var/cache/apt/archives
     - ln -s $HOME/crn-app-registration-tool/script/wrapper.sh $SCRATCH/testwrapper/wrapper.sh; cat $SCRATCH/testwrapper/wrapper.sh
 
@@ -39,7 +39,9 @@ test:
     - cd $SCRATCH/testwrapper; ./wrapper.sh
     - sshpass -p testuser ssh -p 10022 testuser@localhost sbatch /home/testuser/slurm-parent.submit && sleep 30s && sshpass -p testuser ssh -p 10022 testuser@localhost cat /home/testuser/slurm-child.out
 
+  post:
+    - sshpass -p testuser scp -r -p10022 testuser@localhost:/home/testuser/* $SCRATCH/testuser/
+
 general:
   artifacts:
     - "~/scratch"
-    - "~/testuser"
