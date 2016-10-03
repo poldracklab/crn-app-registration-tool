@@ -213,7 +213,7 @@ class TaskSubmissionBase(object):
 
         if overall_exit > 0:
             JOB_LOG.critical('One or more tasks finished with non-zero code')
-            # raise RuntimeError('One or more tasks finished with non-zero code')
+            raise RuntimeError('One or more tasks finished with non-zero code')
         return self.job_ids
 
     def run_grouplevel(self):
