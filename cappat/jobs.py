@@ -209,8 +209,13 @@ class TaskSubmissionBase(object):
 
         # Run sacct to check the exit code of jobs
         overall_exit = sum(self._get_job_acct())
+
+        JOB_LOG.info('Final status of jobs: %s', ', '.join([
+            '%s (%s)' % (k, v) for k, v in list(self._jobs.items())]))
+
         if overall_exit > 0:
-            raise RuntimeError('Some task exited with non-zero code')
+            JOB_LOG.critical('One or more tasks finished with non-zero code')
+            raise RuntimeError('One or more tasks finished with non-zero code')
         return self.job_ids
 
     def run_grouplevel(self):
