@@ -63,10 +63,9 @@ class TaskSubmissionBase(object):
     A base class for task submission
     """
     slurm_settings = {
+        'job_name': 'crn-bidsapp',
         'nodes': 1,
         'time': '01:00:00',
-        'job_name': 'crn-bidsapp',
-        'job_log': 'crn-bidsapp.log'
     }
     jobexp = re.compile(r'Submitted batch job (?P<jobid>\d*)')
     _cmd_prefix = []
@@ -87,7 +86,7 @@ class TaskSubmissionBase(object):
             temp_folder = AGAVE_JOB_LOGS
 
         self.temp_folder = check_folder(op.abspath(temp_folder))
-        self.slurm_settings['job_log'] = op.join(self.temp_folder, self.slurm_settings['job_log'])
+        self.slurm_settings['work_dir'] = self.temp_folder
         self.sbatch_files = self._generate_sbatch()
         self._jobs = {}
         self._group_cmd = group_cmd
@@ -238,7 +237,6 @@ class Lonestar5Submission(TaskSubmissionBase):
         'mincpus': 1,
         'mem_per_cpu': 8000,
         'job_name': 'crn-bidsapp',
-        'job_log': 'crn-bidsapp.log'
     }
 
     def _generate_sbatch(self):
@@ -283,7 +281,6 @@ class SherlockSubmission(TaskSubmissionBase):
         'partition': 'russpold',
         'qos': 'russpold',
         'job_name': 'crn-bidsapp',
-        'job_log': 'crn-bidsapp.log'
     }
 
     def __init__(self, task_list, slurm_settings=None, temp_folder=None):
@@ -330,9 +327,9 @@ class CircleCISubmission(SherlockSubmission):
         self.slurm_settings.pop('mincpus', None)
         self.slurm_settings.pop('mem_per_cpu', None)
         self.slurm_settings.pop('modules', None)
-        self.slurm_settings['job_log'] = self.slurm_settings['job_log'].replace(
+        self.slurm_settings['work_dir'] = self.slurm_settings['work_dir'].replace(
             op.expanduser('~/'), '/')
-        self.slurm_settings['job_log'] = self.slurm_settings['job_log'].replace(
+        self.slurm_settings['work_dir'] = self.slurm_settings['work_dir'].replace(
             '~/', '/')
         return super(CircleCISubmission, self)._generate_sbatch()
 

@@ -3,6 +3,7 @@
 #SBATCH -n {{nodes}}
 #SBATCH -t {{time}}
 #SBATCH -p {{partition}}
+#SBATCH -D {{work_dir}}
 {% if job_name %}
 #SBATCH -J {{job_name}}
 {% endif %}
