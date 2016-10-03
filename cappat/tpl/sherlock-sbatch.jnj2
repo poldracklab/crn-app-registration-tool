@@ -22,3 +22,4 @@
 module {{m}}
 {% endfor %}{% endif %}
 {% if srun_cmd %}{{ srun_cmd }} {% endif %}{{commandline}}
+

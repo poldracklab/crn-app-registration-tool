@@ -285,7 +285,7 @@ class SherlockSubmission(TaskSubmissionBase):
         'partition': 'russpold',
         'qos': 'russpold',
         'job_name': 'crn-bidsapp',
-        'srun_cmd': 'sbatch'
+        'srun_cmd': 'srun'
     }
 
     def __init__(self, task_list, slurm_settings=None, work_dir=None):
