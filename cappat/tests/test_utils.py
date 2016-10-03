@@ -18,4 +18,9 @@ def test_getsystemname():
     Mocks the return values in ls5, to ensure that this implementation
     of the hostname works fine
     """
-    assert cu.getsystemname() == 'ls5.tacc.utexas.edu'
+    assert cu.getsystemname(check_env=False) == 'ls5.tacc.utexas.edu'
+
+def test_getsystemname_env(monkeypatch):
+    """Use monkeypatch to fake the env variable"""
+    monkeypatch.setenv('AGAVE_EXECUTION_SYSTEM', 'test.local')
+    assert cu.getsystemname() == 'test.local'

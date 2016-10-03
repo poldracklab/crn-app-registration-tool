@@ -60,13 +60,12 @@ def get_task_list(bids_dir, app_name, subject_list, group_size=1, *args):
     groups = [sorted(subject_list[i:i+group_size])
               for i in range(0, len(subject_list), group_size)]
 
-    log_arg = '>> {}sjob-{:04d}.log'.format
     task_list = []
     for i, part_group in enumerate(groups):
         task_list.append(
-            '{0} {1} {2} participant --participant_label {3} {4} {6} {5}'.format(
+            '{0} {1} {2} participant --participant_label {3} {4} {5}'.format(
             app_name, bids_dir, AGAVE_JOB_OUTPUT, ' '.join(part_group),
-            '-w work/sjob-{:04d}'.format(i), log_arg(AGAVE_JOB_LOGS, i), ' '.join(args)))
+            '-w work/sjob-{:04d}'.format(i), ' '.join(args)))
 
     wlogger.info('Task list: \n\t%s', '\n\t'.join(task_list))
     return task_list
@@ -91,8 +90,6 @@ def run_wrapper(args):
     subject_list = get_subject_list(args.bids_dir,
                                     args.participant_label,
                                     no_randomize=args.no_randomize)
-
-    # Parse job parameters (slurm_settings)
 
     # Generate tasks & submit
     task_list = get_task_list(

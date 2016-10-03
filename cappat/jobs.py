@@ -49,8 +49,7 @@ class TaskManager(object):
             return SherlockSubmission(task_list, slurm_settings, temp_folder)
         elif hostname.endswith('stampede.tacc.utexas.edu'):
             raise NotImplementedError
-        elif hostname == 'test.circleci' or (hostname.startswith('box') and
-                                             hostname.endswith('.localdomain')):
+        elif hostname == 'test.circleci':
             return CircleCISubmission(task_list, slurm_settings, temp_folder)
         elif hostname == 'test.local':
             return TestSubmission(task_list, slurm_settings, temp_folder)
