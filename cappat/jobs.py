@@ -140,26 +140,31 @@ class TaskSubmissionBase(object):
         for line in results.split('\n'):
             fields = line.split()
             self._jobs[fields[0]] = fields[1]
-            exit_codes.append(int(fields[2]))
+            exit_codes.append(int(fields[2].split(':')[0]))
         return exit_codes
 
     def _get_jobs_status(self):
-        statuses = _run_cmd(self._squeue_cmd + ['-j', ','.join(self.job_ids),
-                            '-o', '%i,%t', '-h']).strip()
+        statuses = [line for line in _run_cmd(
+            self._squeue_cmd + ['-j', ','.join(self.job_ids), '-o', '%i,%t', '-h']).split('\n')
+            if line]
 
-        if statuses.strip().endswith('Invalid job id specified'):
-            # All jobs finished
+        # Jobs are not in the queue anymore
+        if statuses[0].endswith('Invalid job id specified'):
             return True
 
         pending = []
-        for line in statuses.strip('\n'):
-            jobid, status = line.strip(',')
-            self._jobs[jobid] = status
-            pending.append(jobid)
+        for line in statuses:
+            status = line.strip(',')
+            if len(status) < 2:
+                raise RuntimeError('Error parsing squeue output: {}'.format(
+                    line))
+
+            self._jobs[status[0]] = status[1]
+            pending.append(status[0])
 
             if status in SLURM_FAIL_STATUS:
                 raise RuntimeError('Job id {} failed with status {}.'.format(
-                                   jobid, status))
+                                   *status))
 
         JOB_LOG.info('There are pending jobs: %s', ' '.join(pending))
         return False
@@ -195,8 +200,10 @@ class TaskSubmissionBase(object):
                      ' '.join(self.job_ids))
 
         # Run sacct to check the exit code of jobs
-
-        return job_ids
+        overall_exit = sum(self._get_job_acct())
+        if overall_exit > 0:
+            raise RuntimeError('Some task exited with non-zero code')
+        return self.job_ids
 
     def run_grouplevel(self):
         """
@@ -357,6 +364,7 @@ def _run_cmd(cmd, shell=False):
         JOB_LOG.critical('Error submitting (exit code %d): \n\tCmdline: %s\n\tOutput:\n\t%s',
                          error.returncode, ' '.join(cmd), error.output)
         raise
+    JOB_LOG.info('Command output: \n%s', result)
     return result
 
 def _time2secs(timestr):
