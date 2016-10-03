@@ -20,10 +20,10 @@ dependencies:
 
   pre:
     # Let CircleCI cache the apt archive
-    - mkdir -p $SCRATCH $SCRATCH/slurm $SCRATCH/testwrapper /home/testuser
+    - mkdir -p $SCRATCH $SCRATCH/slurm $SCRATCH/testwrapper $HOME/testuser
     - mkdir -p ~/.apt-cache/partial; sudo rm -rf /var/cache/apt/archives; sudo ln -s ~/.apt-cache /var/cache/apt/archives
     - ln -s $HOME/crn-app-registration-tool/script/wrapper.sh $SCRATCH/testwrapper/wrapper.sh; cat $SCRATCH/testwrapper/wrapper.sh
-    - cp $HOME/crn-app-registration-tool/docker/slurm-docker/slurm/*.submit /home/testuser/
+    - cp $HOME/crn-app-registration-tool/docker/slurm-docker/slurm/*.submit $HOME/testuser/
 
   override:
     - sudo apt-get -y update; sudo apt-get -y install sshpass
@@ -33,7 +33,7 @@ dependencies:
     - docker pull poldracklab/slurm:latest
     - mkdir -p ~/docker; docker save poldracklab/slurm:latest > ~/docker/image.tar
     - mkdir -p ~/data; if [[ ! -d ${bidsFolder} ]]; then wget -q --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -O ds003_downsampled.tar.gz "${DS003_URL}" && tar xzf ds003_downsampled.tar.gz -C ~/data/; fi
-    - docker run -v $SCRATCH:/scratch -v /home/testuser:/home/testuser -p 10022:22 -d poldracklab/slurm:latest && sleep 10s
+    - docker run -v $SCRATCH:/scratch -v $HOME/testuser/testuser:/home/testuser -p 10022:22 -d poldracklab/slurm:latest && sleep 10s
 test:
   override:
     - py.test -rw -vv -n 16 --junitxml=${CIRCLE_TEST_REPORTS}/tests.xml
@@ -43,3 +43,4 @@ test:
 general:
   artifacts:
     - "~/scratch"
+    - "~/testuser"
