@@ -214,7 +214,7 @@ class TaskSubmissionBase(object):
 
         if overall_exit > 0:
             JOB_LOG.critical('One or more tasks finished with non-zero code')
-            raise RuntimeError('One or more tasks finished with non-zero code')
+            # raise RuntimeError('One or more tasks finished with non-zero code')
         return self.job_ids
 
     def run_grouplevel(self):
@@ -358,8 +358,6 @@ class TestSubmission(SherlockSubmission):
         return super(TestSubmission, self)._generate_sbatch()
 
     def _submit_sbatch(self, task):
-        task = task.replace('~/', '/')
-        task = task.replace(os.path.expanduser('~/'), '/')
         return _run_cmd(['echo', '"Submitted batch job 49533"'])
 
     def _get_jobs_status(self):

@@ -32,7 +32,7 @@ def test_job_creation():
 
 def test_job_run():
     tasks = ['testapp ~/Data out/ participant --participant_label '
-             '10 11 12 -w work/sjob-0000  >> logs/sjob-0000.log']
+             '10 11 12 -w work/sjob-0000']
 
     slurm = cj.TaskManager.build(tasks, JOB_SETTINGS,
                                  temp_folder=os.path.expanduser('~/scratch/slurm'))
