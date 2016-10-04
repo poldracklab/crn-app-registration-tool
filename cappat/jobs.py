@@ -85,6 +85,9 @@ class TaskSubmissionBase(object):
         if work_dir is None:
             work_dir = os.getcwd()
 
+        self.slurm_settings['child_runtime'] = _secs2time(
+            int(0.85 * _time2secs(self.slurm_settings['time'])))
+
         self.work_dir = check_folder(op.abspath(work_dir))
         self.aux_dir = check_folder(op.join(self.work_dir, AGAVE_JOB_LOGS))
         self.slurm_settings.update(
@@ -248,13 +251,11 @@ class Lonestar5Submission(TaskSubmissionBase):
     def _submit_sbatch(self, task):
         with open(task, 'r') as tfh:
             nodes = sum(1 for line in tfh if line.strip() and not line.strip().startswith('#'))
-        maxruntime = _secs2time(int(0.85 * _time2secs(self.slurm_settings['time'])))
         values = {
             'cwd': os.getcwd(),
             'launcher_file': task,
             'nodes': nodes,
             'ncpus': 1,
-            'runtime': maxruntime,
             'jobname': self.slurm_settings['job_name']
         }
         launcher_cmd = """\

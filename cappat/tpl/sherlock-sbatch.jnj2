@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #SBATCH -n {{nodes}}
-#SBATCH -t {{time}}
+#SBATCH -t {{child_runtime}}
 #SBATCH -p {{partition}}
 #SBATCH -D {{work_dir}}
 #SBATCH -o log/bidsapp-%j.out
