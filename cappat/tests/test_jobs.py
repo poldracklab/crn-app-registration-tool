@@ -11,7 +11,7 @@ from cappat import jobs as cj
 
 JOB_SETTINGS = {
     'nodes': 1,
-    'time': '00:05:00',
+    'max_runtime': '00:05:00',
     'mincpus': 1,
     'execution_system': os.getenv('AGAVE_JOB_EXECUTION_SYSTEM', 'test.local'),
     'mem_per_cpu': 4000,
