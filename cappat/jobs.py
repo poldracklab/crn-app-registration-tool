@@ -86,7 +86,7 @@ class TaskSubmissionBase(object):
             work_dir = os.getcwd()
 
         self.slurm_settings['child_runtime'] = _secs2time(
-            int(0.85 * _time2secs(self.slurm_settings['time'])))
+            int(0.85 * _time2secs(self.slurm_settings['max_runtime'])))
 
         self.work_dir = check_folder(op.abspath(work_dir))
         self.aux_dir = check_folder(op.join(self.work_dir, AGAVE_JOB_LOGS))
