@@ -37,7 +37,11 @@ class TaskManager(object):
         """
         Get the appropriate TaskManager object
         """
-        hostname = getsystemname()
+        hostname = slurm_settings.get('execution_system', None)
+
+        if hostname is None:
+            hostname = getsystemname()
+
         JOB_LOG.info('Identified host: "%s"', hostname)
 
         if not hostname:
@@ -62,11 +66,7 @@ class TaskSubmissionBase(object):
     """
     A base class for task submission
     """
-    slurm_settings = {
-        'job_name': 'crn-bidsapp',
-        'nodes': 1,
-        'time': '01:00:00',
-    }
+    slurm_settings = {}
     jobexp = re.compile(r'Submitted batch job (?P<jobid>\d*)')
     _cmd_prefix = []
 
@@ -235,13 +235,6 @@ class Lonestar5Submission(TaskSubmissionBase):
     """
     The LS5 submission manager
     """
-    slurm_settings = {
-        'nodes': 1,
-        'time': '01:00:00',
-        'mincpus': 1,
-        'mem_per_cpu': 8000,
-        'job_name': 'crn-bidsapp',
-    }
 
     def _generate_sbatch(self):
         """
@@ -277,14 +270,7 @@ class SherlockSubmission(TaskSubmissionBase):
     The Sherlock submission
     """
     slurm_settings = {
-        'nodes': 1,
-        'time': '01:00:00',
-        'mincpus': 4,
-        'mem_per_cpu': 8000,
         'modules': ['load singularity'],
-        'partition': 'russpold',
-        'qos': 'russpold',
-        'job_name': 'crn-bidsapp',
         'srun_cmd': 'srun'
     }
 

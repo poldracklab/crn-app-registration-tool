@@ -1,14 +1,26 @@
 machine:
   environment:
-    DS003_URL: "https://osf.io/wqcdg/?action=download&version=1"
-    bidsFolder: "$HOME/data/ds003_downsampled"
-    AGAVE_EXECUTION_SYSTEM: 'test.circleci'
     SCRATCH: "$HOME/scratch"
+    bidsFolder: "$HOME/data/ds003_downsampled"
+    groupSize: 4
     AGAVE_JOB_ID: "5109696338982465050-242ac115-0001-007"
     AGAVE_APP_ID: "testapp-0.0.1"
+    AGAVE_JOB_NAME: "circleci-test-job"
+    AGAVE_JOB_EXECUTION_SYSTEM: "test.circleci"
+    AGAVE_JOB_BATCH_QUEUE: "debug"
+    AGAVE_JOB_NODE_COUNT: 1
     AGAVE_JOB_MEMORY_PER_NODE: 4
-    AGAVE_JOB_MAX_RUNTIME: "01:01:01"
-    groupSize: 4
+    AGAVE_JOB_PROCESSORS_PER_NODE: 8
+    AGAVE_JOB_MAX_RUNTIME: "00:10:00"
+    AGAVE_JOB_ARCHIVE: false
+    AGAVE_JOB_ARCHIVE_SYSTEM: "storage.system"
+    AGAVE_JOB_ARCHIVE_PATH: "archive/job-${AGAVE_JOB_ID}"
+    AGAVE_JOB_ARCHIVE_URL: "agave://${AGAVE_JOB_ARCHIVE_SYSTEM}/${AGAVE_JOB_ARCHIVE_PATH}"
+    AGAVE_JOB_OWNER: "circleci"
+    AGAVE_JOB_SUBMIT_TIME: "Mon Oct  3 18:20:03 PDT 2016"
+    AGAVE_JOB_TENANT: "circleci.prod"
+    DS003_URL: "https://osf.io/wqcdg/?action=download&version=1"
+
   services:
     - docker
 

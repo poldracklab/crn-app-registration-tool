@@ -23,18 +23,11 @@ def check_folder(folder):
     return folder
 
 
-def getsystemname(check_env=True):
+def getsystemname():
     """
     Queries the host name. If for some reason (i.e. ls5) it returns
     not enough information to identify the host, queries all the IPs
     """
-
-    if check_env:
-        hostname = os.getenv('AGAVE_EXECUTION_SYSTEM')
-
-        if hostname is not None:
-            return hostname
-
     hostname = socket.gethostname()
 
     if '.' not in hostname:
