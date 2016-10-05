@@ -8,11 +8,11 @@ echo "bids_app:" >> settings.yml
 echo "  bids_dir: \"${bidsFolder}\"" >> settings.yml
 echo "  participant_label: \"${subjectList}\"" >> settings.yml
 echo "  parallel_npart: ${parallelParticipants}" >> settings.yml
-echo "  executable: \"${execPath}" >> settings.yml
+echo "  executable: \"${execPath}\"" >> settings.yml
 echo "  output_dir: \"out/\"" >> settings.yml
 echo "  log_dir: \"log/\"" >> settings.yml
 echo "  group_level: ${execGroupLevel}" >> settings.yml
-
+echo "" >> settings.yml
 echo "agave:" >> settings.yml
 echo "  app_id: \"${AGAVE_APP_ID}\"" >> settings.yml
 echo "  job_id: \"${AGAVE_JOB_ID}\"" >> settings.yml

@@ -3,7 +3,7 @@ machine:
     SCRATCH: "$HOME/scratch"
     bidsFolder: "$HOME/data/ds003_downsampled"
     parallelParticipants: 4
-    singularityImagePath: ""
+    execPath: "testapp"
     execGroupLevel: "yes"
     AGAVE_JOB_ID: "5109696338982465050-242ac115-0001-007"
     AGAVE_APP_ID: "testapp-0.0.1"

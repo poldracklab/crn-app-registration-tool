@@ -39,20 +39,20 @@ class SetUp:
 def data():
     return SetUp()
 
-@pytest.mark.parametrize("participant_label,no_random,expected", [
-    (None, False, ['%02d' % i for i in range(1, 14)]),
-    ('sub-10 sub-05', False, ['05', '10']),
-    ('10 05', False, ['05', '10']),
+@pytest.mark.parametrize("participant_label,randomize,expected", [
     (None, True, ['%02d' % i for i in range(1, 14)]),
     ('sub-10 sub-05', True, ['05', '10']),
     ('10 05', True, ['05', '10']),
-    pytest.mark.xfail(('sub-05 sub-15', True, ['05', '15']), raises=RuntimeError),
-    pytest.mark.xfail(('05 15', True, ['05', '15']), raises=RuntimeError),
-    pytest.mark.xfail(('27 15', True, ['27', '15']), raises=RuntimeError)])
-def test_get_subject_list_part(data, participant_label, no_random, expected):
+    (None, False, ['%02d' % i for i in range(1, 14)]),
+    ('sub-10 sub-05', False, ['05', '10']),
+    ('10 05', False, ['05', '10']),
+    pytest.mark.xfail(('sub-05 sub-15', False, ['05', '15']), raises=RuntimeError),
+    pytest.mark.xfail(('05 15', False, ['05', '15']), raises=RuntimeError),
+    pytest.mark.xfail(('27 15', False, ['27', '15']), raises=RuntimeError)])
+def test_get_subject_list_part(data, participant_label, randomize, expected):
     sub_list = cw.get_subject_list(data.path,
                                    participant_label,
-                                   no_randomize=no_random)
+                                   randomize=randomize)
     assert  len(set(expected) - set(sub_list)) == 0
 
 
