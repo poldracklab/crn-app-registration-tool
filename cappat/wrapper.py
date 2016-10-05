@@ -103,7 +103,7 @@ def run_wrapper(opts):
     # Generate subjects list
     subject_list = get_subject_list(
         app_settings['bids_dir'],
-        app_settings['participant_label'].strip(),
+        app_settings.get('participant_label', None)
         randomize=app_settings.get('randomize_part_level', True))
 
     # Generate tasks & submit
