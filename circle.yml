@@ -2,7 +2,9 @@ machine:
   environment:
     SCRATCH: "$HOME/scratch"
     bidsFolder: "$HOME/data/ds003_downsampled"
-    groupSize: 4
+    parallelParticipants: 4
+    singularityImagePath: ""
+    execGroupLevel: "yes"
     AGAVE_JOB_ID: "5109696338982465050-242ac115-0001-007"
     AGAVE_APP_ID: "testapp-0.0.1"
     AGAVE_JOB_NAME: "circleci-test-job"

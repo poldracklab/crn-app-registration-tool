@@ -18,7 +18,7 @@ from cappat import __version__, AGAVE_JOB_LOGS, AGAVE_JOB_OUTPUT
 wlogger = logging.getLogger('wrapper')
 
 
-def get_subject_list(bids_dir, participant_label=None, no_randomize=False):
+def get_subject_list(bids_dir, participant_label=None, randomize=True):
     """
     Returns a the list of subjects to be processed
 
@@ -46,7 +46,7 @@ def get_subject_list(bids_dir, participant_label=None, no_randomize=False):
             raise RuntimeError('Participant label(s) not found in the '
                                'BIDS root directory: {}'.format(' '.join(non_exist)))
 
-    if not no_randomize:
+    if randomize:
         shuffle(subject_list)
 
     wlogger.info('Subject list: %s', ' '.join(subject_list))
@@ -73,37 +73,53 @@ def get_task_list(bids_dir, app_name, subject_list, group_size=1, *args):
     return task_list
 
 
-def run_wrapper(args):
+def run_wrapper(opts):
     """
     A python wrapper to BIDS-Apps for Agave
     """
     import cappat.jobs as cj
     from cappat.utils import check_folder
-    # Ensure folders exist
-    check_folder(op.abspath(args.output_dir))
-    log_dir = check_folder(op.abspath(args.log_dir))
-    logging.basicConfig(filename=op.join(log_dir, 'logfile.txt'),
-                        level=logging.INFO)
 
-    with open(args.settings) as sfh:
+    # Read settings from yml
+    with open(opts.settings) as sfh:
         settings = loadyml(sfh)
 
+    app_settings = settings['bids_app']
+
+    if not app_settings['bids_dir'].strip():
+        raise RuntimeError('Missing BIDS directory')
+
+    if not op.isdir(app_settings['bids_dir']):
+        wlogger.critical('BIDS folder path (%s) does not exist',
+                         app_settings['bids_dir'])
+        raise RuntimeError
+    # Ensure folders exist
+    check_folder(op.abspath(app_settings['output_dir']))
+    log_dir = check_folder(op.abspath(app_settings['log_dir']))
+    logging.basicConfig(
+        filename=op.join(log_dir, 'logfile.txt'),
+        level=getattr(logging, app_settings.get('log_level', 'INFO')))
+
     # Generate subjects list
-    subject_list = get_subject_list(args.bids_dir,
-                                    args.participant_label,
-                                    no_randomize=args.no_randomize)
+    subject_list = get_subject_list(
+        app_settings['bids_dir'],
+        app_settings['participant_label'].strip(),
+        randomize=app_settings.get('randomize_part_level', True))
 
     # Generate tasks & submit
     task_list = get_task_list(
-        args.bids_dir, args.bids_app_name, subject_list, group_size=args.group_size)
+        app_settings['bids_dir'], app_settings['executable'], subject_list,
+        group_size=app_settings.get('parallel_npart', 1))
     # TaskManager factory will return the appropriate submission object
     stm = cj.TaskManager.build(task_list, slurm_settings=settings['agave'])
     # Participant level mapping
     stm.map_participant()
     # Participant level polling
     stm.wait_participant()
-    # Group level reduce
-    stm.run_grouplevel()
+
+    if app_settings.get('group_level', True):
+        # Group level reduce
+        stm.run_grouplevel()
     # Clean up
 
 
@@ -119,32 +135,7 @@ def main():
 
     parser.add_argument('-v', '--version', action='version',
                         version='BIDS-Apps wrapper v{}'.format(__version__))
-
-    parser.add_argument('bids_dir', action='store',
-                        help='The directory with the input dataset '
-                             'formatted according to the BIDS standard.')
-    parser.add_argument('output_dir', action='store',
-                        help='The directory where the output files '
-                             'should be stored. If you are running group level analysis '
-                             'this folder should be prepopulated with the results of the'
-                             'participant level analysis.')
-    parser.add_argument('--participant_label', '--subject_list', '-S', action='store',
-                        help='The label(s) of the participant(s) that should be analyzed. '
-                             'The label corresponds to sub-<participant_label> from the '
-                             'BIDS spec (so it does not include "sub-"). If this parameter '
-                             'is not provided all subjects should be analyzed. Multiple '
-                             'participants can be specified with a space separated list.',
-                        nargs="*")
-    parser.add_argument('--settings', action='store', help='settings file')
-    parser.add_argument('--group-size', default=1, action='store', type=int,
-                        help='parallelize participants in groups')
-    parser.add_argument('--no-randomize', default=False, action='store_true',
-                        help='do not randomize participants list before grouping')
-    parser.add_argument('--bids-app-name', required=True, action='store',
-                        help='BIDS app to call')
-    parser.add_argument('--log-dir', default=AGAVE_JOB_LOGS, action='store',
-                        help='points to a folder where logs should be stored')
-    parser.add_argument('--args', default='', action='store', help='append arguments')
+    parser.add_argument('settings', action='store', help='settings file')
     run_wrapper(parser.parse_args())
 
 if __name__ == '__main__':
