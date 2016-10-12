@@ -36,7 +36,7 @@ dependencies:
     # Let CircleCI cache the apt archive
     - mkdir -p $SCRATCH $SCRATCH/slurm $SCRATCH/testwrapper $SCRATCH/circleci
     - mkdir -p ~/.apt-cache/partial; sudo rm -rf /var/cache/apt/archives; sudo ln -s ~/.apt-cache /var/cache/apt/archives
-    - ln -s $HOME/crn-app-registration-tool/script/wrapper.sh $SCRATCH/testwrapper/wrapper.sh; cat $SCRATCH/testwrapper/wrapper.sh
+    - ln -s $HOME/crn-app-registration-tool/cappat/data/wrapper.sh $SCRATCH/testwrapper/wrapper.sh
 
   override:
     - sudo apt-get -y update; sudo apt-get -y install sshpass

@@ -32,7 +32,7 @@ echo "  owner: \"${AGAVE_JOB_OWNER}\"" >> settings.yml
 echo "  submit_time: \"${AGAVE_JOB_SUBMIT_TIME}\"" >> settings.yml
 echo "  tenant: \"${AGAVE_JOB_TENANT}\"" >> settings.yml
 
-agave_wrapper settings.yml
+cappwrapp settings.yml
 wrapper_code=$?
 
 rm -rf ${bidsFolder}

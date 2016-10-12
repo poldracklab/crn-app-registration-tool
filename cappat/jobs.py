@@ -218,8 +218,8 @@ class TaskSubmissionBase(object):
         if overall_exit > 0:
             failed_jobs = ['{0} (logfiles: log/bidsapp-{0}.{{err,out}}).'.format(k) for k, v in list(
                 self._jobs.items()) if v != 'COMPLETED']
-            JOB_LOG.critical('One or more tasks finished with non-zero code:\n%s\t',
-                             '\n\t'.join(failed_jobs))
+            JOB_LOG.critical('One or more tasks finished with non-zero code:\n'
+                             '\t%s', '\n\t'.join(failed_jobs))
             raise RuntimeError('One or more tasks finished with non-zero code')
         return self.job_ids
 

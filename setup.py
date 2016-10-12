@@ -37,9 +37,11 @@ def main():
         download_url=ldict['DOWNLOAD_URL'],
         classifiers=ldict['CLASSIFIERS'],
         packages=find_packages(exclude=['build', 'doc', 'old-wrappers', 'tests']),
-        package_data={'cappat': ['tpl/*.jnj2']},
+        package_data={'cappat': ['tpl/*.jnj2'],
+                      'cappat': ['data/wrapper.sh']},
         entry_points={'console_scripts': [
-            'agave_wrapper=cappat.wrapper:main'
+            'cappwrapp=cappat.wrapper:main',
+            'cappgen=cappat.appgen:main'
         ]},
         # scripts=glob('scripts/*'),
         zip_safe=False,
