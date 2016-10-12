@@ -55,6 +55,7 @@ test:
 
   post:
     - sshpass -p testpass scp -r -P 10022 circleci@localhost:/home/circleci/* $SCRATCH/circleci/
+    - for errlog in $(find $SCRATCH -name "*.err" -exec stat --printf="%s" {} \;); do if [[ "$errlog" -gt "0" ]]; then exit 1; fi; done;
 
 general:
   artifacts:

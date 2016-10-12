@@ -11,7 +11,8 @@ echo "  parallel_npart: ${parallelParticipants}" >> settings.yml
 echo "  executable: \"${execPath}\"" >> settings.yml
 echo "  output_dir: \"out/\"" >> settings.yml
 echo "  log_dir: \"log/\"" >> settings.yml
-echo "  group_level: ${execGroupLevel}" >> settings.yml
+echo "  level_plan: \"${levelPlan}\"" >> settings.yml
+
 echo "" >> settings.yml
 echo "agave:" >> settings.yml
 echo "  app_id: \"${AGAVE_APP_ID}\"" >> settings.yml
@@ -34,10 +35,16 @@ echo "  tenant: \"${AGAVE_JOB_TENANT}\"" >> settings.yml
 agave_wrapper settings.yml
 wrapper_code=$?
 
-${AGAVE_JOB_CALLBACK_CLEANING_UP}
 rm -rf ${bidsFolder}
 rm -rf work/
 
 if [[ "${wrapper_code}" -gt "0" ]]; then
 	${AGAVE_JOB_CALLBACK_FAILURE}
 fi
+
+# Check output error logs are empty
+for errlog in log/*.err; do
+	if [[ "$(stat --printf="%s" $errlog)" -gt "0" ]]; then
+		${AGAVE_JOB_CALLBACK_FAILURE}
+	fi
+done
