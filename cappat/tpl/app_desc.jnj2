@@ -1,26 +1,49 @@
 {
   "name": "{{ app_name }}",
-  "version": "{{ version }}",
-  "helpURI": "{{ url }}",
-  "label": "{{ label }}",
-  "shortDescription": "{{ short_desc }}",
-  "longDescription": "{{ long_desc }}",
-  "executionSystem": "{{ execution_system or 'slurm-ls5.tacc.utexas.edu' }}",
+  "version": "{{ app_version }}",
+  "executionSystem": "{{ execution_system }}",
+  "helpURI": "{{ help_uri or '' }}",
+  "label": "{{ label or 'missing label' }}",
+  "shortDescription": "{{ short_desc or '' }}",
+  "longDescription": "{{ long_desc or '' }}",
   "executionType": "{{ execution_type or 'HPC' }}",
   "parallelism": "{{ parallelism or 'PARALLEL' }}",
   "defaultQueue": "{{ queue or 'normal' }}",
   "defaultNodeCount": {{ node_count or 1 }},
   "defaultMaxRunTime": "{{ req_time or '04:00:00' }}",
   "defaultMemoryPerNode": "{{ memory or '4GB' }}",
-  "deploymentPath": "{{ deployment_path or 'apps/' + app_name }}",
-  "deploymentSystem": "{{ deployment_system or 'openfmri-storage' }}",
+  "defaultProcessorsPerNode": {{ node_nproc or 1}},
+  "deploymentPath": "apps/cappat{% if wrapper_ver %}-{{wrapper_version}}{% endif %}",
+  "deploymentSystem": "openfmri-storage",
   "templatePath": "wrapper.sh",
-  "testPath": "test/test.sh",
+  "testPath": "wrapper.sh",
   "checkpointable": false,
+  "archiveSystem": "openfmri-archive",
+  "archive": true,
   {% if tags %}
   "tags": [{% for t in tags %}"{{ t }}"{% if not loop.last %}, {% endif %}{% endfor %}],
   {% endif %}
   "modules": [{% for m in modules %}"{{ m }}"{% if not loop.last %}, {% endif %}{% endfor %}],
   "inputs": [{% for i in inputs %}{{ i }}{% if not loop.last %}, {% endif %}{% endfor %}],
-  "parameters": [{% for p in parameters %}{{ p }}{% if not loop.last %}, {% endif %}{% endfor %}]
+  "parameters": [
+    {
+      "semantics": {"minCardinality": 1, "ontology": ["xsd:integer"], "maxCardinality": 1},
+      "id": "parallelParticipants",
+      "value": {"default": 4, "visible": false, "showArgument": false, "required": true, "type": "number", "argument": null},
+      "details": {"description": "Number of participants to process in parallel per workflow",
+         "label": "Number of participants in parallel"}
+    },
+    {
+      "semantics": {"minCardinality": 1, "ontology": ["xsd:string"], "maxCardinality": 1},
+      "id": "execPath",
+      "value": {"default": "mriqc", "visible": false, "showArgument": false, "required": true, "type": "string", "argument": null}
+    },
+    {
+      "semantics": {"minCardinality": 1, "ontology": ["xsd:string"], "maxCardinality": 1},
+      "id": "levelPlan",
+      "value": {"default": "participant group", "visible": false, "showArgument": false, "required": false, "type": "string", "argument": null}
+    },
+  {% for p in parameters %}
+    {{ p }}{% if not loop.last %}, {% endif %}
+  {% endfor %}]
 }

@@ -1,0 +1,77 @@
+[
+    {
+      "id": "execPath",
+      "value": {
+        "default": "",
+        "required": true,
+        "visible": true,
+        "type": "string",
+        "showArgument": false,
+        "argument": null
+      },
+      "semantics": {
+        "minCardinality": 1,
+        "maxCardinality": 1,
+        "ontology": ["xsd:string"]
+      },
+      "details": {
+        "description": "Path to the executable image / script / binary",
+        "label": "Executable"
+      }
+    },
+    {
+      "id": "parallelParticipants",
+      "value": {
+        "default": 4,
+        "required": true,
+        "visible": true,
+        "type": "number",
+        "showArgument": false,
+        "argument": null
+      },
+      "semantics": {
+        "minCardinality": 1,
+        "maxCardinality": 1,
+        "ontology": ["xsd:integer"]
+      },
+      "details": {
+        "description": "Number of participants to process in parallel per workflow",
+        "label": "Processes"
+      }
+    },
+    {
+      "id": "levelPlan",
+      "value": {
+        "default": ["participant", "group"],
+        "required": true,
+        "visible": true,
+        "type": "string",
+        "showArgument": false,
+        "argument": null
+      },
+      "semantics": {
+        "minCardinality": 1,
+        "maxCardinality": 10,
+        "ontology": ["xsd:string"]
+      },
+      "details": {
+        "description": "Analysis levels to be run, in order",
+        "label": "Level"
+      }
+    },
+    {
+      "id": "subjectList",
+      "value": {
+        "default": "",
+        "required": false,
+        "visible": true,
+        "type": "string",
+        "showArgument": false,
+        "argument": null
+      },
+      "details": {
+        "description": "List of participants to be processed",
+        "label": "Participants"
+      }
+    }
+]

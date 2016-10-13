@@ -1,0 +1,17 @@
+[
+	{
+		"semantics": {"ontology": ["xsd:string"]}, 
+		"id": "bidsFolder", 
+		"value": {
+			"default": "agave://openfmri-storage/data/ds003_downsampled",
+			"visible": true,
+			"required": true,
+			"type": "string"
+		},
+		"details": {
+			"argument": null,
+			"showArgument": false,
+			"description": "input root folder of a BIDS-compliant tree",
+			"label": "folder"}
+	}
+]

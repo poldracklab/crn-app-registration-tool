@@ -10,6 +10,7 @@ from datetime import datetime
 
 __packagename__ = 'cappat'
 __version__ = '0.0.1'
+__wrapperver__ = '0.0.1'
 __author__ = 'Oscar Esteban'
 __credits__ = ['Oscar Esteban', 'Chris F. Gorgolewski']
 __license__ = 'Apache Software License'

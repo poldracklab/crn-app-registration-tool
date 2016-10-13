@@ -37,8 +37,12 @@ def main():
         download_url=ldict['DOWNLOAD_URL'],
         classifiers=ldict['CLASSIFIERS'],
         packages=find_packages(exclude=['build', 'doc', 'old-wrappers', 'tests']),
-        package_data={'cappat': ['tpl/*.jnj2'],
-                      'cappat': ['data/wrapper.sh']},
+        package_data={'cappat': [
+            'tpl/*.jnj2',
+            'data/wrapper.sh',
+            'data/default_app_params.json'
+            'data/default_app_inputs.json',
+        ]},
         entry_points={'console_scripts': [
             'cappwrapp=cappat.wrapper:main',
             'cappgen=cappat.appgen:main'
