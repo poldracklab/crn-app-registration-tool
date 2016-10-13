@@ -15,7 +15,7 @@ echo "  level_plan: \"${levelPlan}\"" >> settings.yml
 
 echo "" >> settings.yml
 echo "agave:" >> settings.yml
-echo "  app_id: \"${AGAVE_APP_ID}\"" >> settings.yml
+echo "  app_id: \"${AGAVE_JOB_APP_ID}\"" >> settings.yml
 echo "  job_id: \"${AGAVE_JOB_ID}\"" >> settings.yml
 echo "  job_name: \"${AGAVE_JOB_NAME}\"" >> settings.yml
 echo "  execution_system: \"${AGAVE_JOB_EXECUTION_SYSTEM}\"" >> settings.yml

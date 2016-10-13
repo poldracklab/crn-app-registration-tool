@@ -6,7 +6,7 @@ machine:
     execPath: "testapp"
     execGroupLevel: "yes"
     AGAVE_JOB_ID: "5109696338982465050-242ac115-0001-007"
-    AGAVE_APP_ID: "testapp-0.0.1"
+    AGAVE_JOB_APP_ID: "testapp-0.0.1"
     AGAVE_JOB_NAME: "circleci-test-job"
     AGAVE_JOB_EXECUTION_SYSTEM: "test.circleci"
     AGAVE_JOB_BATCH_QUEUE: "debug"
