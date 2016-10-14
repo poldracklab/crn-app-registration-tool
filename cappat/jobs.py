@@ -32,12 +32,12 @@ class TaskManager(object):
         raise RuntimeError('This class cannot be instatiated.')
 
     @staticmethod
-    def build(task_list, slurm_settings=None, work_dir=None,
+    def build(task_list, settings=None, work_dir=None,
               hostname=None):
         """
         Get the appropriate TaskManager object
         """
-        hostname = slurm_settings.get('execution_system', None)
+        hostname = settings.get('execution_system', None)
 
         if hostname is None:
             hostname = getsystemname()
@@ -48,15 +48,15 @@ class TaskManager(object):
             raise RuntimeError('Could not identify execution system')
 
         if hostname.endswith('ls5.tacc.utexas.edu'):
-            return Lonestar5Submission(task_list, slurm_settings, work_dir)
+            return Lonestar5Submission(task_list, settings, work_dir)
         elif hostname.endswith('stanford.edu'):
-            return SherlockSubmission(task_list, slurm_settings, work_dir)
+            return SherlockSubmission(task_list, settings, work_dir)
         elif hostname.endswith('stampede.tacc.utexas.edu'):
             raise NotImplementedError
         elif hostname == 'test.circleci':
-            return CircleCISubmission(task_list, slurm_settings, work_dir)
+            return CircleCISubmission(task_list, settings, work_dir)
         elif hostname == 'test.local':
-            return TestSubmission(task_list, slurm_settings, work_dir)
+            return TestSubmission(task_list, settings, work_dir)
         else:
             raise RuntimeError(
                 'Could not identify "{}" as a valid execution system'.format(hostname))
@@ -66,31 +66,31 @@ class TaskSubmissionBase(object):
     """
     A base class for task submission
     """
-    slurm_settings = {}
+    settings = {}
     jobexp = re.compile(r'Submitted batch job (?P<jobid>\d*)')
     _cmd_prefix = []
 
     SLURM_TEMPLATE = pkgr.resource_filename('cappat', 'tpl/sherlock-sbatch.jnj2')
 
-    def __init__(self, task_list, slurm_settings=None, group_cmd=None, work_dir=None):
+    def __init__(self, task_list, settings=None, group_cmd=None, work_dir=None):
 
         if not task_list:
             raise RuntimeError('a list of tasks is required')
 
         self.task_list = task_list
 
-        if slurm_settings is not None:
-            self.slurm_settings.update(slurm_settings)
+        if settings is not None:
+            self.settings.update(settings)
 
         if work_dir is None:
             work_dir = os.getcwd()
 
-        self.slurm_settings['child_runtime'] = _secs2time(
-            int(0.85 * _time2secs(self.slurm_settings['max_runtime'])))
+        self.settings['child_runtime'] = _secs2time(
+            int(0.85 * _time2secs(self.settings['max_runtime'])))
 
         self.work_dir = check_folder(op.abspath(work_dir))
         self.aux_dir = check_folder(op.join(self.work_dir, AGAVE_JOB_LOGS))
-        self.slurm_settings.update(
+        self.settings.update(
             {'work_dir': self.work_dir, 'aux_dir': self.aux_dir}
         )
         self.sbatch_files = self._generate_sbatch()
@@ -256,7 +256,7 @@ class Lonestar5Submission(TaskSubmissionBase):
             'launcher_file': task,
             'nodes': nodes,
             'ncpus': 1,
-            'jobname': self.slurm_settings['job_name']
+            'jobname': self.settings['job_name']
         }
         launcher_cmd = """\
 export LAUNCHER_WORKDIR={cwd}; \
@@ -270,15 +270,15 @@ class SherlockSubmission(TaskSubmissionBase):
     """
     The Sherlock submission
     """
-    slurm_settings = {
+    settings = {
         'modules': ['load singularity'],
         'srun_cmd': 'srun'
     }
 
-    def __init__(self, task_list, slurm_settings=None, work_dir=None):
-        if not slurm_settings is None:
-            self.slurm_settings.update(slurm_settings)
-        self.slurm_settings['qos'] = self.slurm_settings['partition']
+    def __init__(self, task_list, settings=None, work_dir=None):
+        if not settings is None:
+            self.settings.update(settings)
+        self.settings['qos'] = self.settings['partition']
         super(SherlockSubmission, self).__init__(
             task_list, work_dir=work_dir)
 
@@ -286,13 +286,13 @@ class SherlockSubmission(TaskSubmissionBase):
         """
         Generates one sbatch file per task
         """
-        slurm_settings = self.slurm_settings.copy()
+        settings = self.settings.copy()
         sbatch_files = []
         for i, task in enumerate(self.task_list):
             sbatch_files.append(op.join(self.aux_dir, 'slurm-%06d.sbatch' % i))
-            slurm_settings['commandline'] = task
+            settings['commandline'] = task
             conf = Template(self.SLURM_TEMPLATE)
-            conf.generate_conf(slurm_settings, sbatch_files[-1])
+            conf.generate_conf(settings, sbatch_files[-1])
         return sbatch_files
 
 
@@ -300,7 +300,7 @@ class CircleCISubmission(SherlockSubmission):
     """
     A CircleCI submission manager to work with the slurm docker image
     """
-    slurm_settings = {
+    settings = {
         'nodes': 1,
         'time': '01:00:00',
         'partition': 'debug',
@@ -314,13 +314,13 @@ class CircleCISubmission(SherlockSubmission):
         Generates one sbatch file per task
         """
         # Remove default settings of Sherlock which are unsupported
-        self.slurm_settings.pop('qos', None)
-        self.slurm_settings.pop('mincpus', None)
-        self.slurm_settings.pop('mem_per_cpu', None)
-        self.slurm_settings.pop('modules', None)
-        self.slurm_settings['work_dir'] = self.slurm_settings['work_dir'].replace(
+        self.settings.pop('qos', None)
+        self.settings.pop('mincpus', None)
+        self.settings.pop('mem_per_cpu', None)
+        self.settings.pop('modules', None)
+        self.settings['work_dir'] = self.settings['work_dir'].replace(
             op.expanduser('~/'), '/')
-        self.slurm_settings['work_dir'] = self.slurm_settings['work_dir'].replace(
+        self.settings['work_dir'] = self.settings['work_dir'].replace(
             '~/', '/')
         return super(CircleCISubmission, self)._generate_sbatch()
 
@@ -339,11 +339,11 @@ class TestSubmission(SherlockSubmission):
         Generates one sbatch file per task
         """
         # Remove default settings of Sherlock not supported
-        self.slurm_settings.pop('qos', None)
-        self.slurm_settings.pop('mincpus', None)
-        self.slurm_settings.pop('mem_per_cpu', None)
-        self.slurm_settings.pop('modules', None)
-        self.slurm_settings.pop('srun_cmd', None)
+        self.settings.pop('qos', None)
+        self.settings.pop('mincpus', None)
+        self.settings.pop('mem_per_cpu', None)
+        self.settings.pop('modules', None)
+        self.settings.pop('srun_cmd', None)
         return super(TestSubmission, self)._generate_sbatch()
 
     def _submit_sbatch(self, task):

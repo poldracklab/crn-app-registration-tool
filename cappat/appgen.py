@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2016-03-16 11:28:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-10-13 16:01:39
+# @Last Modified time: 2016-10-14 11:33:32
 
 """
 Agave app generator
@@ -69,6 +69,9 @@ class CappatAgaveClient(object):
             if self.app_desc['deploymentPath'].endswith('/'):
                 self.app_desc['deploymentPath'] = self.app_desc['deploymentPath'][:-1]
             self.app_desc['deploymentPath'] += '-{}'.format(wversion)
+
+        # CAPPAT works only with the crnenv loaded
+        self.app_desc['modules'] = ['load crnenv']
 
         with open(self.AGAVE_SESSION_FILE, 'r') as asf:
             session_data = json.load(asf)
@@ -187,12 +190,11 @@ class CappatAgaveClient(object):
         root_dir = self.agave.systems.get(
             systemId=image_storage)['storage']['rootDir']
 
-        self.app_desc['modules'].append('load singularity')
         for i, param in enumerate(self.app_desc['parameters']):
             if param['id'] == 'execPath':
                 exec_cmd = op.join(root_dir, op.basename(image_file))
                 logger.info('Registering a singularity-image-based app, command line is "%s"',
-                            ' '.join(exec_cmd))
+                            exec_cmd)
                 self.app_desc['parameters'][i]['value']['default'] = exec_cmd
 
     def add_app(self):
@@ -282,7 +284,9 @@ CRN-platform""", formatter_class=RawTextHelpFormatter)
     # Set default parameters
     with open(pkgrf('cappat', 'data/default_app_params.json')) as defp:
         settings['parameters'] = json.load(defp)
-    settings['parameters'][0]['value']['default'] = opts.entry_point
+    settings['parameters'][1]['value']['default'] = opts.entry_point
+    settings['parameters'][0]['value']['default'] = opts.modules
+    settings.pop('modules', None)
 
     with open(pkgrf('cappat', 'data/default_app_inputs.json')) as defp:
         settings['inputs'] = json.load(defp)

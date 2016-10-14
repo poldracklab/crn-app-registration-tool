@@ -86,7 +86,7 @@ def run_wrapper(opts):
     with open(opts.settings) as sfh:
         settings = loadyml(sfh)
 
-    app_settings = settings['bids_app']
+    app_settings = settings['app']
 
     if not app_settings['bids_dir'].strip():
         raise RuntimeError('Missing BIDS directory')
@@ -113,7 +113,7 @@ def run_wrapper(opts):
         app_settings['bids_dir'], app_settings['executable'], subject_list,
         group_size=app_settings.get('parallel_npart', 1))
     # TaskManager factory will return the appropriate submission object
-    stm = cj.TaskManager.build(task_list, slurm_settings=settings['agave'])
+    stm = cj.TaskManager.build(task_list, settings=app_settings)
     # Participant level mapping
     stm.map_participant()
     # Participant level polling
