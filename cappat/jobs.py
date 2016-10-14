@@ -155,20 +155,21 @@ class TaskSubmissionBase(object):
         return exit_codes
 
     def _get_jobs_status(self):
-        statuses = _run_cmd(self._cmd_prefix + [
+        squeue = _run_cmd(self._cmd_prefix + [
             'squeue', '-j', ','.join(self.job_ids), '-o', '%i,%t', '-h'])
 
         # Jobs are not in the queue anymore
-        if statuses is None:
+        if squeue is None:
             JOB_LOG.warn('Command "squeue" was empty: jobs are completed.')
             return True
 
-        if 'Invalid job id specified' in statuses:
-            JOB_LOG.warn('Jobs completed - squeue: %s', ' '.join(statuses))
+        if 'Invalid job id specified' in squeue:
+            JOB_LOG.warn('Jobs completed - squeue: %s', squeue)
             return True
 
         pending = []
-        for line in statuses.split('\n'):
+        statuses = squeue.split('\n')
+        for line in statuses:
             status = line.split(',')
             if len(status) < 2:
                 JOB_LOG.error('Error parsing squeue output: \n%s\n', line)
