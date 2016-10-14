@@ -16,7 +16,7 @@
       },
       "details": {
         "description": "Analysis levels to be run, in order",
-        "label": "Level"
+        "label": "Modules"
       }
     },
     {

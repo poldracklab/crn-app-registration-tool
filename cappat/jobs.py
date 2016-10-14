@@ -160,28 +160,35 @@ class TaskSubmissionBase(object):
 
         # Jobs are not in the queue anymore
         if statuses is None:
+            JOB_LOG.warn('Command "squeue" was empty: jobs are completed.')
             return True
 
-        statuses = statuses.split('\n')
-        if statuses[0].endswith('Invalid job id specified'):
+        if 'Invalid job id specified' in statuses:
+            JOB_LOG.warn('Jobs completed - squeue: %s', ' '.join(statuses))
             return True
 
         pending = []
-        for line in statuses:
+        for line in statuses.split('\n'):
             status = line.split(',')
             if len(status) < 2:
+                JOB_LOG.error('Error parsing squeue output: \n%s\n', line)
                 raise RuntimeError('Error parsing squeue output: {}'.format(
                     line))
 
             self._jobs[status[0]] = status[1]
-            pending.append(status[0])
 
             if status in SLURM_FAIL_STATUS:
-                raise RuntimeError('Job id {} failed with status {}.'.format(
-                                   *status))
+                JOB_LOG.warn('Job id %s failed (%s).', *status)
+            else:
+                pending.append(status[0])
 
-        JOB_LOG.info('There are pending jobs: %s', ' '.join(pending))
-        return False
+        if pending:
+            JOB_LOG.info('There are pending jobs: %s', ' '.join(pending))
+            return False
+
+        JOB_LOG.info('Jobs %s not present in squeue list, finishing polling.',
+                     ', '.join(self.job_ids))
+        return True
 
     def map_participant(self):
         """
@@ -208,8 +215,7 @@ class TaskSubmissionBase(object):
             all_finished = self._get_jobs_status()
             sleep(SLEEP_SECONDS)
 
-        JOB_LOG.info('Finished wait on jobs %s',
-                     ' '.join(self.job_ids))
+        JOB_LOG.info('Finished wait on jobs %s', ', '.join(self.job_ids))
 
         # Run sacct to check the exit code of jobs
         overall_exit = sum(self._get_job_acct())

@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2016-03-16 11:28:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-10-14 11:33:32
+# @Last Modified time: 2016-10-14 14:02:17
 
 """
 Agave app generator
@@ -192,7 +192,8 @@ class CappatAgaveClient(object):
 
         for i, param in enumerate(self.app_desc['parameters']):
             if param['id'] == 'execPath':
-                exec_cmd = op.join(root_dir, op.basename(image_file))
+                exec_cmd = ' '.join(
+                    ['singularity', 'run', op.join(root_dir, op.basename(image_file))])
                 logger.info('Registering a singularity-image-based app, command line is "%s"',
                             exec_cmd)
                 self.app_desc['parameters'][i]['value']['default'] = exec_cmd
