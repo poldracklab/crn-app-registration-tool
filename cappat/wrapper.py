@@ -53,7 +53,8 @@ def get_subject_list(bids_dir, participant_label=None, randomize=True):
     return subject_list
 
 
-def get_task_list(bids_dir, app_name, subject_list, group_size=1, *args):
+def get_task_list(bids_dir, app_name, subject_list, group_size=1,
+                  workdir=False, *args):
     """
     Generate a list of tasks for launcher or slurm
     """
@@ -62,9 +63,10 @@ def get_task_list(bids_dir, app_name, subject_list, group_size=1, *args):
 
     task_list = []
     for i, part_group in enumerate(groups):
-        task_str = '{0} {1} {2} participant --participant_label {3} {4}'.format(
-            app_name, bids_dir, AGAVE_JOB_OUTPUT, ' '.join(part_group),
-            '-w work/sjob-{:04d}'.format(i))
+        task_str = '{0} {1} {2} participant --participant_label {3}'.format(
+            app_name, bids_dir, AGAVE_JOB_OUTPUT, ' '.join(part_group))
+        if workdir:
+            task_str += ' -w work/sjob-{:04d}'.format(i)
         if args:
             task_str += ' ' + ' '.join(args)
         task_list.append(task_str)
