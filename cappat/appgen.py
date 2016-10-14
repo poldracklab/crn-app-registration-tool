@@ -190,10 +190,7 @@ class CappatAgaveClient(object):
         self.app_desc['modules'].append('load singularity')
         for i, param in enumerate(self.app_desc['parameters']):
             if param['id'] == 'execPath':
-                # PATCHES:
-                # 1) use singularity exec since agave does not manage unix permissions
-                exec_cmd = ['singularity', 'exec',
-                            op.join(root_dir, op.basename(image_file))]
+                exec_cmd = op.join(root_dir, op.basename(image_file))
                 logger.info('Registering a singularity-image-based app, command line is "%s"',
                             ' '.join(exec_cmd))
                 self.app_desc['parameters'][i]['value']['default'] = exec_cmd

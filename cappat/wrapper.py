@@ -63,7 +63,7 @@ def get_task_list(bids_dir, app_name, subject_list, group_size=1,
 
     task_list = []
     for i, part_group in enumerate(groups):
-        task_str = '{0} {1} {2} participant --participant_label {3}'.format(
+        task_str = '{0} $(pwd){1} {2} participant --participant_label {3}'.format(
             app_name, bids_dir, AGAVE_JOB_OUTPUT, ' '.join(part_group))
         if workdir:
             task_str += ' -w work/sjob-{:04d}'.format(i)
