@@ -19,7 +19,7 @@ echo "  nodes: ${AGAVE_JOB_NODE_COUNT}" >> settings.yml
 echo "  memory_per_node: ${AGAVE_JOB_MEMORY_PER_NODE}" >> settings.yml
 echo "  cpu_per_node: ${AGAVE_JOB_PROCESSORS_PER_NODE}" >> settings.yml
 echo "  max_runtime: ${AGAVE_JOB_MAX_RUNTIME}" >> settings.yml
-echo "  modules: ${modules}" >> settings.yml
+echo "  modules: ${loadModules}" >> settings.yml
 
 echo "" >> settings.yml
 echo "agave:" >> settings.yml
@@ -33,6 +33,8 @@ echo "  owner: ${AGAVE_JOB_OWNER}" >> settings.yml
 echo "  tenant: ${AGAVE_JOB_TENANT}" >> settings.yml
 echo "  submit_time: ${AGAVE_JOB_SUBMIT_TIME}" >> settings.yml
 
+# Ensure we load the module
+module load crnenv
 cappwrapp settings.yml
 wrapper_code=$?
 

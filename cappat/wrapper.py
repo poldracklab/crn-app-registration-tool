@@ -119,6 +119,10 @@ def run_wrapper(opts):
     # Participant level polling
     stm.wait_participant()
 
+    if app_settings.get('modules'):
+        if not isinstance(app_settings['modules'], list):
+            app_settings['modules'] = [app_settings['modules']]
+
     if app_settings.get('group_level', True):
         # Group level reduce
         stm.run_grouplevel()

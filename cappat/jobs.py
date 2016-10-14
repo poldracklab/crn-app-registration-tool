@@ -270,10 +270,6 @@ class SherlockSubmission(TaskSubmissionBase):
     """
     The Sherlock submission
     """
-    settings = {
-        'modules': ['load singularity'],
-        'srun_cmd': 'srun'
-    }
 
     def __init__(self, task_list, settings=None, work_dir=None):
         if not settings is None:
