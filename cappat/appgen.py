@@ -151,15 +151,16 @@ class CappatAgaveClient(object):
             systemId=system, filePath=remote_path)]
         file_exists = remote_fname in existing_files
         if not overwrite and file_exists:
-            raise RuntimeError(
-                'Remote path "{}/{}" exists in "{}"'.format(
-                    remote_path, remote_fname, system))
+            logger.warn(
+                'Overwriting remote path "%s/%s" in "%s" is not allowed, skipping...',
+                remote_path, remote_fname, system)
+            return True
 
         if file_exists:
             logger.warn('Overwriting remote path "%s/%s" in "%s"',
                         remote_path, remote_fname, system)
 
-        with open(fname, 'r') as file_to_upload:
+        with open(fname, 'rb') as file_to_upload:
             result = self.agave.files.importData(
                 systemId=system, filePath=remote_path,
                 fileName=remote_fname, fileToUpload=file_to_upload
@@ -189,8 +190,13 @@ class CappatAgaveClient(object):
         self.app_desc['modules'].append('load singularity')
         for i, param in enumerate(self.app_desc['parameters']):
             if param['id'] == 'execPath':
-                self.app_desc['parameters'][i]['value']['default'] = op.join(
-                    root_dir, op.basename(image_file))
+                # PATCHES:
+                # 1) use singularity exec since agave does not manage unix permissions
+                exec_cmd = ['singularity', 'exec',
+                            op.join(root_dir, op.basename(image_file))]
+                logger.info('Registering a singularity-image-based app, command line is "%s"',
+                            ' '.join(exec_cmd))
+                self.app_desc['parameters'][i]['value']['default'] = exec_cmd
 
     def add_app(self):
         apps = [app['id'] for app in self.agave.apps.list()]

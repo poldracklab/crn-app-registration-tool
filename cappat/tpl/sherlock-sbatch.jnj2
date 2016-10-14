@@ -6,6 +6,7 @@
 #SBATCH -D {{work_dir}}
 #SBATCH -o log/bidsapp-%j.out
 #SBATCH -e log/bidsapp-%j.err
+#SBATCH --export=NONE
 {% if job_name %}
 #SBATCH -J {{job_name}}
 {% endif %}
