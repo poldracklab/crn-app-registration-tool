@@ -11,8 +11,9 @@ from subprocess import check_output, CalledProcessError, STDOUT
 import re
 from time import sleep
 import logging
-
+from pprint import pprint
 import pkg_resources as pkgr
+
 from cappat import AGAVE_JOB_LOGS
 from cappat.tpl import Template
 from cappat.utils import check_folder, getsystemname
@@ -97,7 +98,8 @@ class TaskSubmissionBase(object):
         self._jobs = {}
         self._group_cmd = group_cmd
 
-        JOB_LOG.info('Created TaskManager type "%s"', self.__class__.__name__)
+        JOB_LOG.info('Created TaskManager type "%s" with default settings: \n\t%s',
+                     self.__class__.__name__, pprint(self.settings))
 
     @property
     def job_ids(self):

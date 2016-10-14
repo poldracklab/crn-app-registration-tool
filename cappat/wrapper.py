@@ -108,6 +108,11 @@ def run_wrapper(opts):
         app_settings.get('participant_label', None),
         randomize=app_settings.get('randomize_part_level', True))
 
+    # Ensure modules is a list of modules
+    if app_settings.get('modules'):
+        if not isinstance(app_settings['modules'], list):
+            app_settings['modules'] = [app_settings['modules']]
+
     # Generate tasks & submit
     task_list = get_task_list(
         app_settings['bids_dir'], app_settings['executable'], subject_list,
@@ -118,10 +123,6 @@ def run_wrapper(opts):
     stm.map_participant()
     # Participant level polling
     stm.wait_participant()
-
-    if app_settings.get('modules'):
-        if not isinstance(app_settings['modules'], list):
-            app_settings['modules'] = [app_settings['modules']]
 
     if app_settings.get('group_level', True):
         # Group level reduce
