@@ -244,8 +244,12 @@ CRN-platform""", formatter_class=RawTextHelpFormatter)
 
     g_optional = parser.add_argument_group('Optional App fields')
     for field, default_value in AGAVE_APP_OPTIONAL:
-        g_optional.add_argument(
-            '--{}'.format(field), action='store', default=default_value)
+        if isinstance(default_value, list):
+            g_optional.add_argument(
+                '--{}'.format(field), action='store', default=default_value, nargs='*')
+        else:
+            g_optional.add_argument(
+                '--{}'.format(field), action='store', default=default_value)
 
     g_outputs = parser.add_argument_group('Outputs')
     g_outputs.add_argument('-o', '--output', action='store')
