@@ -265,7 +265,8 @@ class Lonestar5Submission(TaskSubmissionBase):
             'launcher_file': task,
             'nodes': nodes,
             'ncpus': 1,
-            'jobname': self.settings['job_name']
+            'jobname': self.settings['job_name'],
+            'runtime': self.settings['child_runtime']
         }
         launcher_cmd = """\
 export LAUNCHER_WORKDIR={cwd}; \
