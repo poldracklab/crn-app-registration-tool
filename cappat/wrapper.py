@@ -54,7 +54,7 @@ def get_subject_list(bids_dir, participant_label=None, randomize=True):
 
 
 def get_task_list(bids_dir, app_name, subject_list, group_size=1,
-                  workdir=False, **args):
+                  workdir=False, args=None):
     """
     Generate a list of tasks for launcher or slurm
     """
@@ -68,7 +68,7 @@ def get_task_list(bids_dir, app_name, subject_list, group_size=1,
         if workdir:
             task_str += ' -w work/sjob-{:04d}'.format(i)
         if args:
-            task_str += ' ' + ' '.join([v for k, v in list(args).items()])
+            task_str += ' ' + args
         task_list.append(task_str)
 
     wlogger.info('Task list: \n\t%s', '\n\t'.join(task_list))
@@ -87,7 +87,6 @@ def run_wrapper(opts):
         settings = loadyml(sfh)
 
     app_settings = settings['app']
-    app_settings['args'] = app_settings.get('args', {})
 
     if not app_settings['bids_dir'].strip():
         raise RuntimeError('Missing BIDS directory')
@@ -118,7 +117,7 @@ def run_wrapper(opts):
     task_list = get_task_list(
         app_settings['bids_dir'], app_settings['executable'], subject_list,
         group_size=app_settings.get('parallel_npart', 1),
-        **app_settings['args'])
+        args=app_settings.get('args'))
     # TaskManager factory will return the appropriate submission object
     stm = cj.TaskManager.build(task_list, settings=app_settings)
     # Participant level mapping
