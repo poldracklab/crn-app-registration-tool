@@ -236,16 +236,21 @@ class TaskSubmissionBase(object):
             raise RuntimeError('One or more tasks finished with non-zero code')
         return self.job_ids
 
-    def run_grouplevel(self):
+    def run_grouplevel(self, group_cmd=None):
         """
         Run the reduce operation over the participant map
         """
+        if group_cmd:
+            self._group_cmd = group_cmd
+
         if self._group_cmd is None:
             JOB_LOG.warning('Group level command not set, skipping reduce operation.')
-            return None
+            return False
 
         JOB_LOG.info('Kicking off reduce operation')
-        return _run_cmd(self._group_cmd)
+        if _run_cmd(self._group_cmd):
+            return True
+        return False
 
 class Lonestar5Submission(TaskSubmissionBase):
     """

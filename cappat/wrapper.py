@@ -126,7 +126,7 @@ def run_wrapper(opts):
     stm.wait_participant()
 
     # Group level reduce
-    stm.group_cmd = app_settings.get('group_cmd', None)
+    stm.run_grouplevel(app_settings.get('group_cmd', None))
 
     # Clean up
 
