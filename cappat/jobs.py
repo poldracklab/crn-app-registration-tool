@@ -113,6 +113,10 @@ class TaskSubmissionBase(object):
     def group_cmd(self):
         return self._group_cmd
 
+    @group_cmd.setter
+    def group_cmd(self, value):
+        self._group_cmd = value
+
     def _parse_jobid(self, slurm_msg):
         if isinstance(slurm_msg, (list, tuple)):
             slurm_msg = '\n'.join(slurm_msg)
