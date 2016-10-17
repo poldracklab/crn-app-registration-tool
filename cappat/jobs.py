@@ -96,7 +96,7 @@ class TaskSubmissionBase(object):
         )
         self.sbatch_files = self._generate_sbatch()
         self._jobs = {}
-        self._group_cmd = group_cmd
+        self.group_cmd = group_cmd
 
         JOB_LOG.info('Created TaskManager type "%s" with default settings: \n\t%s',
                      self.__class__.__name__, pprint(self.settings))
@@ -115,6 +115,9 @@ class TaskSubmissionBase(object):
 
     @group_cmd.setter
     def group_cmd(self, value):
+        if not isinstance(value, list):
+            value = [value]
+
         self._group_cmd = value
 
     def _parse_jobid(self, slurm_msg):
@@ -241,14 +244,14 @@ class TaskSubmissionBase(object):
         Run the reduce operation over the participant map
         """
         if group_cmd:
-            self._group_cmd = group_cmd
+            self.group_cmd = group_cmd
 
-        if self._group_cmd is None:
+        if self.group_cmd is None:
             JOB_LOG.warning('Group level command not set, skipping reduce operation.')
             return False
 
         JOB_LOG.info('Kicking off reduce operation')
-        if _run_cmd(self._group_cmd):
+        if _run_cmd(self.group_cmd):
             return True
         return False
 
