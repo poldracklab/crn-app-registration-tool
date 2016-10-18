@@ -251,7 +251,7 @@ class TaskSubmissionBase(object):
             return False
 
         JOB_LOG.info('Kicking off reduce operation')
-        if _run_cmd(self.group_cmd):
+        if _run_cmd(self.group_cmd, shell=True):
             return True
         return False
 
