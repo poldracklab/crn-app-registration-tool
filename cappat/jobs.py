@@ -96,8 +96,8 @@ class TaskSubmissionBase(object):
         )
         self.sbatch_files = self._generate_sbatch()
         self._jobs = {}
-        self._group_cmd = [settings['executable'], settings['bids_dir'], AGAVE_JOB_OUTPUT,
-                           'group']
+        self._group_cmd = [self.settings['executable'], self.settings['bids_dir'],
+                           AGAVE_JOB_OUTPUT, 'group']
 
         if self.settings.get('modules', []):
             modules_list = []
