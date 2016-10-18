@@ -14,7 +14,7 @@ import logging
 from pprint import pprint
 import pkg_resources as pkgr
 
-from cappat import AGAVE_JOB_LOGS
+from cappat import AGAVE_JOB_LOGS, AGAVE_JOB_OUTPUT
 from cappat.tpl import Template
 from cappat.utils import check_folder, getsystemname
 
@@ -96,7 +96,19 @@ class TaskSubmissionBase(object):
         )
         self.sbatch_files = self._generate_sbatch()
         self._jobs = {}
-        self._group_cmd = []
+        self._group_cmd = [settings['executable'], settings['bids_dir'], AGAVE_JOB_OUTPUT,
+                           'group']
+
+        if self.settings.get('modules', []):
+            modules_list = []
+            for m in self.settings['modules']:
+                modules_list += ['module'] + m.split(' ')
+                modules_list[-1] += ';'
+
+            self._group_cmd = modules_list + self._group_cmd
+            JOB_INFO.info('Automatically inferred group level command: "%s"',
+                          ' '.join(self.group_cmd))
+
 
         JOB_LOG.info('Created TaskManager type "%s" with default settings: \n\t%s',
                      self.__class__.__name__, pprint(self.settings))
@@ -239,19 +251,17 @@ class TaskSubmissionBase(object):
             raise RuntimeError('One or more tasks finished with non-zero code')
         return self.job_ids
 
-    def run_grouplevel(self, group_cmd=None):
+    def run_grouplevel(self):
         """
         Run the reduce operation over the participant map
         """
-        if group_cmd:
-            self.group_cmd = group_cmd
-
         if not self.group_cmd:
             JOB_LOG.warning('Group level command not set, skipping reduce operation.')
-            return False
+            return True
 
         JOB_LOG.info('Kicking off reduce operation')
         if _run_cmd(self.group_cmd, shell=True):
+            JOB_LOG.info('Group level finished successfully.')
             return True
         return False
 

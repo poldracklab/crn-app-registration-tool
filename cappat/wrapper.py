@@ -87,6 +87,7 @@ def run_wrapper(opts):
         settings = loadyml(sfh)
 
     app_settings = settings['app']
+    levels = app_settings.get('level_plan', ['participant'])
 
     if not app_settings['bids_dir'].strip():
         raise RuntimeError('Missing BIDS directory')
@@ -126,11 +127,12 @@ def run_wrapper(opts):
     stm.wait_participant()
 
     # Group level reduce
-    try:
-        stm.run_grouplevel(app_settings.get('group_cmd', None))
-    except Exception:
-        wlogger.error('Error in execution of grouplevel command')
-        raise
+    if 'group' in levels:
+        try:
+            stm.run_grouplevel()
+        except Exception:
+            wlogger.error('Error in execution of grouplevel command')
+            raise
 
     # Clean up
 
