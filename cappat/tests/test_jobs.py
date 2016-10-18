@@ -32,6 +32,13 @@ def test_job_creation():
     slurm.map_participant()
     assert len(slurm.job_ids) == 2
 
+def test_group_level_cmd():
+    tasks = ['echo "Submitted batch job 49533"',
+             'echo "Submitted batch job 49534"']
+
+    slurm = cj.TaskManager.build(tasks, JOB_SETTINGS)
+    assert slurm.group_cmd == 'testapp ~/bids/path out/ group'
+
 def test_job_run():
     tasks = ['echo "Submitted batch job 49533"',
              'echo "Submitted batch job 49534"',
