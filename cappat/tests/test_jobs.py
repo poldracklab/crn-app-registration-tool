@@ -12,6 +12,8 @@ from cappat import jobs as cj
 JOB_SETTINGS = {
     'nodes': 1,
     'max_runtime': '00:05:00',
+    'executable': 'testapp',
+    'bids_dir': '~/bids/path',
     'mincpus': 1,
     'execution_system': os.getenv('AGAVE_JOB_EXECUTION_SYSTEM', 'test.local'),
     'mem_per_cpu': 4000,
