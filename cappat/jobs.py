@@ -106,7 +106,7 @@ class TaskSubmissionBase(object):
                 modules_list[-1] += ';'
 
             self._group_cmd = modules_list + self._group_cmd
-            JOB_INFO.info('Automatically inferred group level command: "%s"',
+            JOB_LOG.info('Automatically inferred group level command: "%s"',
                           ' '.join(self.group_cmd))
 
 

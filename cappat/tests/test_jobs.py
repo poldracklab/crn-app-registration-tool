@@ -37,7 +37,7 @@ def test_group_level_cmd():
              'echo "Submitted batch job 49534"']
 
     slurm = cj.TaskManager.build(tasks, JOB_SETTINGS)
-    assert slurm.group_cmd == 'testapp ~/bids/path out/ group'
+    assert slurm.group_cmd == ['testapp', '~/bids/path', 'out/', 'group']
 
 def test_job_run():
     tasks = ['echo "Submitted batch job 49533"',
