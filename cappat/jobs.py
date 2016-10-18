@@ -73,7 +73,7 @@ class TaskSubmissionBase(object):
 
     SLURM_TEMPLATE = pkgr.resource_filename('cappat', 'tpl/sherlock-sbatch.jnj2')
 
-    def __init__(self, task_list, settings=None, group_cmd=None, work_dir=None):
+    def __init__(self, task_list, settings=None, work_dir=None):
 
         if not task_list:
             raise RuntimeError('a list of tasks is required')
@@ -96,7 +96,7 @@ class TaskSubmissionBase(object):
         )
         self.sbatch_files = self._generate_sbatch()
         self._jobs = {}
-        self.group_cmd = group_cmd
+        self._group_cmd = []
 
         JOB_LOG.info('Created TaskManager type "%s" with default settings: \n\t%s',
                      self.__class__.__name__, pprint(self.settings))
@@ -246,7 +246,7 @@ class TaskSubmissionBase(object):
         if group_cmd:
             self.group_cmd = group_cmd
 
-        if self.group_cmd is None:
+        if not self.group_cmd:
             JOB_LOG.warning('Group level command not set, skipping reduce operation.')
             return False
 

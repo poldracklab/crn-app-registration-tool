@@ -126,7 +126,11 @@ def run_wrapper(opts):
     stm.wait_participant()
 
     # Group level reduce
-    stm.run_grouplevel(app_settings.get('group_cmd', None))
+    try:
+        stm.run_grouplevel(app_settings.get('group_cmd', None))
+    except Exception:
+        wlogger.error('Error in execution of grouplevel command')
+        raise
 
     # Clean up
 
