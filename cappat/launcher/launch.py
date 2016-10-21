@@ -1,0 +1,64 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+
+# launch script for lonestar
+# deals with both command files for parametric launcher and with single commands
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+import argparse
+import sys,os
+import subprocess
+from tempfile import *
+from launch_slurm_ls5 import launch_slurm_ls5
+import socket
+
+MAXCORES=4104
+
+# set up argument parser
+
+parser = argparse.ArgumentParser(description='process SLURM job.')
+parser.add_argument('-s','--script',help='name of parallel script to run',dest='script_name')
+parser.add_argument('-r','--runtime',help='maximum runtime for job',default='01:00:00',dest='runtime')
+parser.add_argument('-j','--jobname',help='job name',default='launch',dest='jobname')
+parser.add_argument('-A','--projname',help='name of project',dest='projname', default="Analysis_Lonestar")
+parser.add_argument('-d','--cwd',help='name of working directory',dest='directory')
+parser.add_argument('-q','--queue',help='name of queue',default='normal',dest='queue')
+
+
+parser.add_argument('-m','--email',help='email address for notification',dest='email')
+parser.add_argument('-f','--qsubfile',help='name of qsub file',dest='qsubfile')
+parser.add_argument('-w','--waitproc',help='process to wait for',dest='waitproc')
+parser.add_argument('--ht',help='use hyperthreading',dest='use_hyperthreading', action="store_true",default=False)
+parser.add_argument('-k','--keepqsubfile',help='keep qsub file',dest='keepqsubfile', action="store_true",default=False)
+parser.add_argument('-u','--ignoreuser',help='ignore ~/.launch_user',dest='ignoreuser', action="store_true",default=False)
+parser.add_argument('-t','--test',help='do not actually launch job',dest='test', action="store_true",default=False)
+
+parser.add_argument('-i','--hold_jid', help='wait for this job id to complete before launching', dest='hold', default=None)
+parser.add_argument('-N','--nodes',type=int, help = 'request that a minimum number of nodes be allocated to this job', dest = 'nodes', default = None)
+parser.add_argument('-n','--max-cores-per-node', type=int, help='request that a maximum number of cores be used per node (for memorys sake)', dest = 'max_cores_per_node', default = None)
+
+class C(object):
+    pass
+
+c=C()
+
+if len(sys.argv) < 2:
+    print
+
+(args, command) = parser.parse_known_args(sys.argv[1:])
+
+if len(command) > 0:
+    cmd = ' '.join(command)
+else:
+    cmd = ''
+
+hostname = socket.gethostname()
+
+launch_slurm_ls5(serialcmd=cmd, script_name=args.script_name, runtime=args.runtime,
+                jobname=args.jobname, projname=args.projname, queue=args.queue, email=args.email, qsubfile=args.qsubfile, keepqsubfile=args.keepqsubfile,
+                ignoreuser=args.ignoreuser, test=args.test, parser=parser, c=args, verbose=0,
+                hold=args.hold, outfile=[], cwd=[], nodes=args.nodes, max_cores_per_node=args.max_cores_per_node,
+                use_hyperthreading=args.use_hyperthreading)
+sys.exit(0)

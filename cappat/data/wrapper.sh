@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Do not archive work and bidsFolder
+echo "${bidsFolder}/" >> .agave.archive
+echo "work/" >> .agave.archive
+
 # Create output directories
 mkdir -p log/ out/
 
@@ -37,9 +41,6 @@ echo "  submit_time: ${AGAVE_JOB_SUBMIT_TIME}" >> settings.yml
 module load crnenv
 cappwrapp settings.yml
 wrapper_code=$?
-
-rm -rf ${bidsFolder}
-rm -rf work/
 
 if [[ "${wrapper_code}" -gt "0" ]]; then
 	${AGAVE_JOB_CALLBACK_FAILURE}
