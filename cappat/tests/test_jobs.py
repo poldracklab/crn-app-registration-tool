@@ -12,6 +12,8 @@ from cappat import jobs as cj
 JOB_SETTINGS = {
     'nodes': 1,
     'max_runtime': '00:05:00',
+    'executable': 'testapp',
+    'bids_dir': '~/bids/path',
     'mincpus': 1,
     'execution_system': os.getenv('AGAVE_JOB_EXECUTION_SYSTEM', 'test.local'),
     'mem_per_cpu': 4000,
@@ -29,6 +31,13 @@ def test_job_creation():
                                  work_dir=os.path.expanduser('~/scratch/slurm-1'))
     slurm.map_participant()
     assert len(slurm.job_ids) == 2
+
+def test_group_level_cmd():
+    tasks = ['echo "Submitted batch job 49533"',
+             'echo "Submitted batch job 49534"']
+
+    slurm = cj.TaskManager.build(tasks, JOB_SETTINGS)
+    assert slurm.group_cmd == ['testapp', '~/bids/path', 'out/', 'group']
 
 def test_job_run():
     tasks = ['echo "Submitted batch job 49533"',
