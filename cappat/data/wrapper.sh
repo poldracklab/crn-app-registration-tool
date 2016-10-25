@@ -47,14 +47,31 @@ if [[ "${wrapper_code}" -gt "0" ]]; then
     ${AGAVE_JOB_CALLBACK_FAILURE}
 fi
 
+echo "***** Dumping .out logs into logfile.txt *****" >> log/logfile.txt
+for outlog in log/*.out; do
+    if [[ "$(stat --printf="%s" $outlog)" -gt "0" ]]; then
+        echo "** $outlog:" >> log/logfile.txt
+        cat $outlog >> log/logfile.txt
+
+        if grep -q ERROR "$outlog"; then
+            echo "Error found in $outlog" >> log/logfile.txt
+            ${AGAVE_JOB_CALLBACK_FAILURE}
+        fi
+    fi
+    mv $outlog ./
+done
+
+
 # Check output error logs are empty
 echo "***** Dumping error logs into logfile.txt *****" >> log/logfile.txt
 for errlog in log/*.err; do
-    echo "** $errlog:" >> log/logfile.txt
-    cat $errlog >> log/logfile.txt
+    if [[ "$(stat --printf="%s" $errlog)" -gt "0" ]]; then
+        echo "** $errlog:" >> log/logfile.txt
+        cat $errlog >> log/logfile.txt
 
-    if grep -q ERROR "$errlog"; then
-        ${AGAVE_JOB_CALLBACK_FAILURE}
+        if grep -q ERROR "$errlog"; then
+            ${AGAVE_JOB_CALLBACK_FAILURE}
+        fi
     fi
     mv $errlog ./
 done
