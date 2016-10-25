@@ -2,7 +2,7 @@
     {
       "id": "loadModules",
       "value": {
-        "default": [],
+        "default": [""],
         "required": true,
         "visible": false,
         "type": "string",

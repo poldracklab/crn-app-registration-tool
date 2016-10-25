@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Do not archive work and bidsFolder
-echo "${bidsFolder}/" >> .agave.archive
-echo "work/" >> .agave.archive
+echo "${bidsFolder}" >> .agave.archive
+echo "work" >> .agave.archive
 
 # Create output directories
 mkdir -p log/ out/
@@ -22,7 +22,7 @@ echo "  partition: ${AGAVE_JOB_BATCH_QUEUE}" >> settings.yml
 echo "  nodes: ${AGAVE_JOB_NODE_COUNT}" >> settings.yml
 echo "  memory_per_node: ${AGAVE_JOB_MEMORY_PER_NODE}" >> settings.yml
 echo "  cpu_per_node: ${AGAVE_JOB_PROCESSORS_PER_NODE}" >> settings.yml
-echo "  max_runtime: ${AGAVE_JOB_MAX_RUNTIME}" >> settings.yml
+echo "  max_runtime: \"${AGAVE_JOB_MAX_RUNTIME}\"" >> settings.yml
 echo "  modules: ${loadModules}" >> settings.yml
 
 echo "" >> settings.yml
@@ -43,12 +43,19 @@ cappwrapp settings.yml
 wrapper_code=$?
 
 if [[ "${wrapper_code}" -gt "0" ]]; then
-	${AGAVE_JOB_CALLBACK_FAILURE}
+    echo "ERROR: cappwrap exit code was nonzero (${wrapper_code})." >> log/logfile.txt
+    ${AGAVE_JOB_CALLBACK_FAILURE}
 fi
 
 # Check output error logs are empty
+echo "***** Dumping error logs into logfile.txt *****" >> log/logfile.txt
 for errlog in log/*.err; do
-	if [[ "$(stat --printf="%s" $errlog)" -gt "0" ]]; then
-		${AGAVE_JOB_CALLBACK_FAILURE}
-	fi
+    echo "** $errlog:" >> log/logfile.txt
+    cat $errlog >> log/logfile.txt
+
+    if grep -q ERROR "$errlog"; then
+        ${AGAVE_JOB_CALLBACK_FAILURE}
+    fi
+    mv $errlog ./
 done
+
