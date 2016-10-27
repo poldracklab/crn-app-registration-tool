@@ -426,18 +426,21 @@ def _probe_env(modules_list):
     JOB_LOG.info('Probing environment with modules:\n\t%s',
                  '\n\t'.join(modtext))
 
-    with open('group-env.sh', 'w') as envfile:
+    with open('group-env.sh', 'ab') as envfile:
         envfile.write('\n'.join(modtext))
 
     proc = sp.Popen(['bash', '-c', 'source group-env.sh && env'],
-                    stdout=sp.PIPE)
-    JOB_LOG.info('Environment snapshot:\n%s', proc.stdout)
-
+                    stdout=sp.PIPE, stderr=sp.PIPE)
     envdict = {}
     for line in proc.stdout:
         key, _, value = line.partition('=')
         envdict[key] = value
     proc.communicate()
+    if proc.returncode > 0:
+        JOB_LOG.warn('Probing environment failed:\n%s', proc.stderr)
+        return None
+
+    JOB_LOG.info('Environment snapshot:\n%s', proc.stdout)
     return envdict
 
 def _time2secs(timestr):
