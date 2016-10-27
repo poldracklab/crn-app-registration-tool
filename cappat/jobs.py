@@ -99,15 +99,15 @@ class TaskSubmissionBase(object):
         self._group_cmd = [self.settings['executable'], self.settings['bids_dir'],
                            AGAVE_JOB_OUTPUT, 'group']
 
-        if self.settings.get('modules', []):
-            modules_list = []
-            for m in self.settings['modules']:
-                modules_list += ['module'] + m.split(' ')
-                modules_list[-1] += ';'
+        # if self.settings.get('modules', []):
+        #     modules_list = []
+        #     for m in self.settings['modules']:
+        #         modules_list += ['module'] + m.split(' ')
+        #         modules_list[-1] += ';'
 
-            self._group_cmd = modules_list + self._group_cmd
-            JOB_LOG.info('Automatically inferred group level command: "%s"',
-                          ' '.join(self.group_cmd))
+        #     self._group_cmd = modules_list + self._group_cmd
+        JOB_LOG.info('Automatically inferred group level command: "%s"',
+                      ' '.join(self.group_cmd))
 
 
         JOB_LOG.info('Created TaskManager type "%s" with default settings: \n\t%s',

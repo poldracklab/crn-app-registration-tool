@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from datetime import datetime
 
 __packagename__ = 'cappat'
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 __wrapperver__ = '0.0.1'
 __author__ = 'Oscar Esteban'
 __credits__ = ['Oscar Esteban', 'Chris F. Gorgolewski']
