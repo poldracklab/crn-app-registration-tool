@@ -7,12 +7,13 @@ Utilities: Agave wrapper for sherlock
 """
 import os
 from os import path as op
-from subprocess import check_output, CalledProcessError, STDOUT
+import subprocess as sp
 import re
 from time import sleep
 import logging
 from pprint import pprint
 import pkg_resources as pkgr
+from io import open
 
 from cappat import AGAVE_JOB_LOGS, AGAVE_JOB_OUTPUT
 from cappat.tpl import Template
@@ -98,14 +99,6 @@ class TaskSubmissionBase(object):
         self._jobs = {}
         self._group_cmd = [self.settings['executable'], self.settings['bids_dir'],
                            AGAVE_JOB_OUTPUT, 'group']
-
-        # if self.settings.get('modules', []):
-        #     modules_list = []
-        #     for m in self.settings['modules']:
-        #         modules_list += ['module'] + m.split(' ')
-        #         modules_list[-1] += ';'
-
-        #     self._group_cmd = modules_list + self._group_cmd
         JOB_LOG.info('Automatically inferred group level command: "%s"',
                       ' '.join(self.group_cmd))
 
@@ -260,7 +253,39 @@ class TaskSubmissionBase(object):
             return True
 
         JOB_LOG.info('Kicking off reduce operation')
-        if _run_cmd(self.group_cmd, shell=True):
+
+
+        envdict = None
+
+        if self.settings.get('modules', []):
+            JOB_LOG.info('Group level command depends on module, checking environment')
+            modules_load = []
+            modules_use = []
+            for m in self.settings['modules']:
+                if m.startswith('load '):
+                    modules_load += m[5:].split(' ')
+                elif m.startswith('module load '):
+                    modules_load += m[12:].split(' ')
+                elif m.startswith('use '):
+                    modules_use += m[4:].split(' ')
+                elif m.startswith('module use '):
+                    modules_use += m[11:].split(' ')
+
+            with open('group-env.sh', 'w') as f:
+                f.write('module unload crnenv')
+                f.write('module use ' + ' '.join(modules_use))
+                f.write('module load ' + ' '.join(modules_load))
+
+            proc = sp.Popen(['bash', '-c', 'source group-env.sh && env'],
+                            stdout=sp.PIPE)
+
+            envdict = {}
+            for line in proc.stdout:
+                key, _, value = line.partition('=')
+                envdict[key] = value
+            proc.communicate()
+
+        if _run_cmd(self.group_cmd, env=envdict):
             JOB_LOG.info('Group level finished successfully.')
             return True
         return False
@@ -384,11 +409,11 @@ class TestSubmission(SherlockSubmission):
     def _run_sacct(self):
         return '\n'.join(['%s  COMPLETED  0:0' % j for j in self.job_ids])
 
-def _run_cmd(cmd, shell=False):
+def _run_cmd(cmd, shell=False, env=None):
     JOB_LOG.info('Executing command line: %s', ' '.join(cmd))
     try:
-        result = check_output(cmd, stderr=STDOUT, shell=shell)
-    except CalledProcessError as error:
+        result = sp.check_output(cmd, stderr=sp.STDOUT, shell=shell, env=env)
+    except sp.CalledProcessError as error:
         JOB_LOG.critical('Error submitting (exit code %d): \n\tCmdline: %s\n\tOutput:\n\t%s',
                          error.returncode, ' '.join(cmd), error.output)
         raise
