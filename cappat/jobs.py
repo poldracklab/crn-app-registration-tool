@@ -255,6 +255,11 @@ class TaskSubmissionBase(object):
         JOB_LOG.info('Kicking off reduce operation')
         envdict = _probe_env(self.settings.get('modules', []))
 
+        if envdict is None:
+            JOB_LOG.info('No environment variables to snapshot.')
+        else:
+            JOB_LOG.info('Environment snapshot:\n%s', str(envdict))
+
         if _run_cmd(self.group_cmd, env=envdict):
             JOB_LOG.info('Group level finished successfully.')
             return True
@@ -435,12 +440,12 @@ def _probe_env(modules_list):
     for line in proc.stdout:
         key, _, value = line.partition('=')
         envdict[key] = value
+
     proc.communicate()
     if proc.returncode > 0:
         JOB_LOG.warn('Probing environment failed:\n%s', proc.stderr)
         return None
 
-    JOB_LOG.info('Environment snapshot:\n%s', proc.stdout)
     return envdict
 
 def _time2secs(timestr):
