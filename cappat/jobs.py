@@ -73,6 +73,7 @@ class TaskSubmissionBase(object):
     _cmd_prefix = []
 
     SLURM_TEMPLATE = pkgr.resource_filename('cappat', 'tpl/sherlock-sbatch.jnj2')
+    GROUP_TEMPLATE = pkgr.resource_filename('cappat', 'tpl/group-wrapper.jnj2')
 
     def __init__(self, task_list, settings=None, work_dir=None):
 
@@ -253,14 +254,14 @@ class TaskSubmissionBase(object):
             return True
 
         JOB_LOG.info('Kicking off reduce operation')
-        envdict = _probe_env(self.settings.get('modules', []))
+        group_wrapper = 'group-wrapper.sh'
+        conf = Template(self.GROUP_TEMPLATE)
+        conf.generate_conf({
+            'modules': _format_modules(self.settings.get('modules', [])),
+            'cmdline': self.group_cmd
+        }, group_wrapper)
 
-        if envdict is None:
-            JOB_LOG.info('No environment variables to snapshot.')
-        else:
-            JOB_LOG.info('Environment snapshot:\n%s', str(envdict))
-
-        if _run_cmd(self.group_cmd, env=envdict):
+        if _run_cmd(['/bin/bash', group_wrapper]):
             JOB_LOG.info('Group level finished successfully.')
             return True
         return False
@@ -400,11 +401,11 @@ def _run_cmd(cmd, shell=False, env=None):
     JOB_LOG.info('Command output: \n%s', result)
     return result
 
-def _probe_env(modules_list):
+def _format_modules(modules_list):
     if not modules_list:
         return None
 
-    JOB_LOG.info('Group level command depends on module, checking environment')
+    JOB_LOG.info('Formatting modules list...')
     modules_load = []
     modules_use = []
     modtext = ['module unload crnenv']
@@ -428,25 +429,8 @@ def _probe_env(modules_list):
     else:
         modtext.append('module load ' + ' '.join(modules_load))
 
-    JOB_LOG.info('Probing environment with modules:\n\t%s',
-                 '\n\t'.join(modtext))
+    return '\n\t'.join(modtext)
 
-    with open('group-env.sh', 'ab') as envfile:
-        envfile.write('\n'.join(modtext))
-
-    proc = sp.Popen(['bash', '-c', 'source group-env.sh && env'],
-                    stdout=sp.PIPE, stderr=sp.PIPE)
-    envdict = {}
-    for line in proc.stdout:
-        key, _, value = line.partition('=')
-        envdict[key] = value
-
-    proc.communicate()
-    if proc.returncode > 0:
-        JOB_LOG.warn('Probing environment failed:\n%s', proc.stderr)
-        return None
-
-    return envdict
 
 def _time2secs(timestr):
     return sum((60**i) * int(t) for i, t in enumerate(reversed(timestr.split(':'))))
