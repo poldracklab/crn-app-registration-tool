@@ -271,13 +271,16 @@ class TaskSubmissionBase(object):
                 elif m.startswith('module use '):
                     modules_use += m[11:].split(' ')
 
-            with open('group-env.sh', 'w') as f:
-                f.write('module unload crnenv')
-                f.write('module use ' + ' '.join(modules_use))
-                f.write('module load ' + ' '.join(modules_load))
+            with open('group-env.sh', 'w') as envfile:
+                envfile.write('\n'.join([
+                    'module unload crnenv',
+                    'module use ' + ' '.join(modules_use),
+                    'module load ' + ' '.join(modules_load)]))
 
+            JOB_LOG.info('Probing environment...')
             proc = sp.Popen(['bash', '-c', 'source group-env.sh && env'],
                             stdout=sp.PIPE)
+            JOB_LOG.info('Environment snapshot:\n%s', proc.stdout)
 
             envdict = {}
             for line in proc.stdout:
