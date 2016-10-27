@@ -258,7 +258,7 @@ class TaskSubmissionBase(object):
         conf = Template(self.GROUP_TEMPLATE)
         conf.generate_conf({
             'modules': _format_modules(self.settings.get('modules', [])),
-            'cmdline': self.group_cmd
+            'cmdline': ' '.join(self.group_cmd)
         }, group_wrapper)
 
         if _run_cmd(['/bin/bash', group_wrapper]):
@@ -429,7 +429,7 @@ def _format_modules(modules_list):
     else:
         modtext.append('module load ' + ' '.join(modules_load))
 
-    return '\n\t'.join(modtext)
+    return '\n'.join(modtext)
 
 
 def _time2secs(timestr):
