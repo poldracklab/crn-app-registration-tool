@@ -253,40 +253,7 @@ class TaskSubmissionBase(object):
             return True
 
         JOB_LOG.info('Kicking off reduce operation')
-
-
-        envdict = None
-
-        if self.settings.get('modules', []):
-            JOB_LOG.info('Group level command depends on module, checking environment')
-            modules_load = []
-            modules_use = []
-            for m in self.settings['modules']:
-                if m.startswith('load '):
-                    modules_load += m[5:].split(' ')
-                elif m.startswith('module load '):
-                    modules_load += m[12:].split(' ')
-                elif m.startswith('use '):
-                    modules_use += m[4:].split(' ')
-                elif m.startswith('module use '):
-                    modules_use += m[11:].split(' ')
-
-            with open('group-env.sh', 'w') as envfile:
-                envfile.write('\n'.join([
-                    'module unload crnenv',
-                    'module use ' + ' '.join(modules_use),
-                    'module load ' + ' '.join(modules_load)]))
-
-            JOB_LOG.info('Probing environment...')
-            proc = sp.Popen(['bash', '-c', 'source group-env.sh && env'],
-                            stdout=sp.PIPE)
-            JOB_LOG.info('Environment snapshot:\n%s', proc.stdout)
-
-            envdict = {}
-            for line in proc.stdout:
-                key, _, value = line.partition('=')
-                envdict[key] = value
-            proc.communicate()
+        envdict = _probe_env(self.settings.get('modules', []))
 
         if _run_cmd(self.group_cmd, env=envdict):
             JOB_LOG.info('Group level finished successfully.')
@@ -428,6 +395,50 @@ def _run_cmd(cmd, shell=False, env=None):
     JOB_LOG.info('Command output: \n%s', result)
     return result
 
+def _probe_env(modules_list):
+    if not modules_list:
+        return None
+
+    JOB_LOG.info('Group level command depends on module, checking environment')
+    modules_load = []
+    modules_use = []
+    modtext = ['module unload crnenv']
+    for mod in modules_list:
+        if mod.startswith('load '):
+            modules_load += mod[5:].split(' ')
+        elif mod.startswith('module load '):
+            modules_load += mod[12:].split(' ')
+        elif mod.startswith('use '):
+            modules_use += mod[4:].split(' ')
+        elif mod.startswith('module use '):
+            modules_use += mod[11:].split(' ')
+        else:
+            modules_load += mod.split(' ')
+
+    if modules_use:
+        modtext.append('module use ' + ' '.join(modules_use))
+
+    if not modules_load:
+        JOB_LOG.warn('No modules to load were found.')
+    else:
+        modtext.append('module load ' + ' '.join(modules_load))
+
+    JOB_LOG.info('Probing environment with modules:\n\t%s',
+                 '\n\t'.join(modtext))
+
+    with open('group-env.sh', 'w') as envfile:
+        envfile.write('\n'.join(modtext))
+
+    proc = sp.Popen(['bash', '-c', 'source group-env.sh && env'],
+                    stdout=sp.PIPE)
+    JOB_LOG.info('Environment snapshot:\n%s', proc.stdout)
+
+    envdict = {}
+    for line in proc.stdout:
+        key, _, value = line.partition('=')
+        envdict[key] = value
+    proc.communicate()
+    return envdict
 
 def _time2secs(timestr):
     return sum((60**i) * int(t) for i, t in enumerate(reversed(timestr.split(':'))))
