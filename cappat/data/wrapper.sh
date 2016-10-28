@@ -39,11 +39,11 @@ echo "  submit_time: ${AGAVE_JOB_SUBMIT_TIME}" >> settings.yml
 
 # Ensure we load the module
 module load crnenv
-cappwrapp settings.yml
+cappwrapp settings.yml 2>> log/errors.txt 1>> log/logfile.txt
 wrapper_code=$?
 
 if [[ "${wrapper_code}" -gt "0" ]]; then
-    echo "ERROR: cappwrap exit code was nonzero (${wrapper_code})." >> log/logfile.txt
+    echo "ERROR: cappwrap exit code was nonzero (${wrapper_code})." >> log/errors.txt
     ${AGAVE_JOB_CALLBACK_FAILURE}
 fi
 
@@ -54,7 +54,7 @@ for outlog in log/*.out; do
         cat $outlog >> log/logfile.txt
 
         if grep -q ERROR "$outlog"; then
-            echo "Error found in $outlog" >> log/logfile.txt
+            echo "Error found in $outlog" >> log/errors.txt
             ${AGAVE_JOB_CALLBACK_FAILURE}
         fi
     fi
@@ -70,6 +70,7 @@ for errlog in log/*.err; do
         cat $errlog >> log/logfile.txt
 
         if grep -q ERROR "$errlog"; then
+            echo "Error found in error log $errlog" >> log/errors.txt
             ${AGAVE_JOB_CALLBACK_FAILURE}
         fi
     fi
