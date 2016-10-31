@@ -20,7 +20,7 @@
 #SBATCH --qos={{qos}}
 {% endif %}
 {% if modules %}{% for m in modules %}
-module {{m}}
+{{ m }}
 {% endfor %}{% endif %}
 {% if srun_cmd %}{{ srun_cmd }} {% endif %}{{commandline}}
 

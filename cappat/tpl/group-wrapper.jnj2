@@ -1,7 +1,7 @@
 #!/bin/bash
 # THIS IS AN AUTO-GENERATED WRAPPER
 
-{% if modules %}
-{{ modules }}
-{% endif %}
+{% if modules %}{% for m in modules %}
+{{ m }}
+{% endfor %}{% endif %}
 {{ cmdline }}

@@ -24,9 +24,7 @@ JOB_SETTINGS = {
 
 
 def test_read_modules():
-    expected = """\
-module use /some/path
-module load crnenv singularity/crn"""
+    expected = ['module use /some/path', 'module load crnenv singularity/crn']
     result = cj._format_modules('use /some/path load crnenv singularity/crn')
     assert result == expected
 

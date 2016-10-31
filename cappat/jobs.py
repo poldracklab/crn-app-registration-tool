@@ -103,6 +103,8 @@ class TaskSubmissionBase(object):
         JOB_LOG.info('Automatically inferred group level command: "%s"',
                       ' '.join(self.group_cmd))
 
+        self.settings['modules'] = _format_modules(self.settings.get('modules', []))
+
 
         JOB_LOG.info('Created TaskManager type "%s" with default settings: \n\t%s',
                      self.__class__.__name__, pprint(self.settings))
@@ -257,7 +259,7 @@ class TaskSubmissionBase(object):
         group_wrapper = 'group-wrapper.sh'
         conf = Template(self.GROUP_TEMPLATE)
         conf.generate_conf({
-            'modules': _format_modules(self.settings.get('modules', [])),
+            'modules': self.settings.get('modules', []),
             'cmdline': ' '.join(self.group_cmd)
         }, group_wrapper)
 
@@ -433,7 +435,7 @@ def _format_modules(modules_list):
     else:
         modtext.append('module load ' + ' '.join(modules_load))
 
-    return '\n'.join(modtext)
+    return modtext
 
 
 def _time2secs(timestr):
