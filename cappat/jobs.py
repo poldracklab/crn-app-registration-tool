@@ -309,11 +309,10 @@ class SherlockSubmission(TaskSubmissionBase):
     """
 
     def __init__(self, task_list, settings=None, work_dir=None):
-        if not settings is None:
-            self.settings.update(settings)
-        self.settings['qos'] = self.settings['partition']
         super(SherlockSubmission, self).__init__(
-            task_list, work_dir=work_dir)
+            task_list, settings=settings, work_dir=work_dir)
+        self.settings['qos'] = self.settings['partition']
+
 
     def _generate_sbatch(self):
         """
