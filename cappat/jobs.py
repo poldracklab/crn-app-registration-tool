@@ -68,7 +68,7 @@ class TaskSubmissionBase(object):
     """
     A base class for task submission
     """
-    settings = {}
+    _default_settings = {}
     jobexp = re.compile(r'Submitted batch job (?P<jobid>\d*)')
     _cmd_prefix = []
 
@@ -81,6 +81,11 @@ class TaskSubmissionBase(object):
             raise RuntimeError('a list of tasks is required')
 
         self.task_list = task_list
+        self._jobs = {}
+
+        self.settings = {}
+        if self._default_settings:
+            self.settings.update(self._default_settings)
 
         if settings is not None:
             self.settings.update(settings)
@@ -97,15 +102,12 @@ class TaskSubmissionBase(object):
             {'work_dir': self.work_dir, 'aux_dir': self.aux_dir}
         )
         self.sbatch_files = self._generate_sbatch()
-        self._jobs = {}
         self._group_cmd = [self.settings['executable'], self.settings['bids_dir'],
                            AGAVE_JOB_OUTPUT, 'group']
         JOB_LOG.info('Automatically inferred group level command: "%s"',
                       ' '.join(self.group_cmd))
 
         self.settings['modules'] = _format_modules(self.settings.get('modules', []))
-
-
         JOB_LOG.info('Created TaskManager type "%s" with default settings: \n\t%s',
                      self.__class__.__name__, pprint(self.settings))
 
@@ -331,7 +333,7 @@ class CircleCISubmission(SherlockSubmission):
     """
     A CircleCI submission manager to work with the slurm docker image
     """
-    settings = {
+    _default_settings = {
         'nodes': 1,
         'time': '01:00:00',
         'partition': 'debug',
