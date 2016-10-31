@@ -405,22 +405,26 @@ def _format_modules(modules_list):
     if not modules_list:
         return None
 
+    if isinstance(modules_list, list):
+        modules_list = ' '.join(modules_list)
+    modules_list = modules_list.split(' ')
+
     JOB_LOG.info('Formatting modules list...')
     modules_load = []
     modules_use = []
-    modtext = ['module unload crnenv']
-    for mod in modules_list:
-        if mod.startswith('load '):
-            modules_load += mod[5:].split(' ')
-        elif mod.startswith('module load '):
-            modules_load += mod[12:].split(' ')
-        elif mod.startswith('use '):
-            modules_use += mod[4:].split(' ')
-        elif mod.startswith('module use '):
-            modules_use += mod[11:].split(' ')
-        else:
-            modules_load += mod.split(' ')
+    _is_load = False
+    for i, mod in enumerate(modules_list):
+        if mod == 'module':
+            _is_load = False
+        elif mod == 'use':
+            _is_load = False
+            modules_use.append(modules_list[i+1])
+        elif mod == 'load':
+            _is_load = True
+        elif _is_load:
+            modules_load.append(mod)
 
+    modtext = []
     if modules_use:
         modtext.append('module use ' + ' '.join(modules_use))
 

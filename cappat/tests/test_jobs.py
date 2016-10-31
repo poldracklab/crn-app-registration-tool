@@ -23,6 +23,13 @@ JOB_SETTINGS = {
 }
 
 
+def test_read_modules():
+    expected = """\
+module use /some/path
+module load crnenv singularity/crn"""
+    result = cj._format_modules('use /some/path load crnenv singularity/crn')
+    assert result == expected
+
 def test_job_creation():
     tasks = ['echo "Submitted batch job 49533"',
              'echo "Submitted batch job 49534"']
