@@ -12,7 +12,7 @@ import re
 from time import sleep
 import logging
 from pprint import pprint
-import pkg_resources as pkgr
+from pkg_resources import resource_filename as pkgrf
 from io import open
 
 from cappat import AGAVE_JOB_LOGS, AGAVE_JOB_OUTPUT
@@ -68,12 +68,12 @@ class TaskSubmissionBase(object):
     """
     A base class for task submission
     """
-    _default_settings = {}
+    settings = None
     jobexp = re.compile(r'Submitted batch job (?P<jobid>\d*)')
     _cmd_prefix = []
 
-    SLURM_TEMPLATE = pkgr.resource_filename('cappat', 'tpl/sherlock-sbatch.jnj2')
-    GROUP_TEMPLATE = pkgr.resource_filename('cappat', 'tpl/group-wrapper.jnj2')
+    SLURM_TEMPLATE = op.abspath(pkgrf('cappat', 'tpl/sherlock-sbatch.jnj2'))
+    GROUP_TEMPLATE = op.abspath(pkgrf('cappat', 'tpl/group-wrapper.jnj2'))
 
     def __init__(self, task_list, settings=None, work_dir=None):
 
@@ -83,9 +83,8 @@ class TaskSubmissionBase(object):
         self.task_list = task_list
         self._jobs = {}
 
-        self.settings = {}
-        if self._default_settings:
-            self.settings.update(self._default_settings)
+        if self.settings is None:
+            self.settings = {}
 
         if settings is not None:
             self.settings.update(settings)
@@ -309,10 +308,11 @@ class SherlockSubmission(TaskSubmissionBase):
     """
 
     def __init__(self, task_list, settings=None, work_dir=None):
+        if settings.get('partition'):
+            settings['qos'] = settings.get('partition')
+
         super(SherlockSubmission, self).__init__(
             task_list, settings=settings, work_dir=work_dir)
-        self.settings['qos'] = self.settings['partition']
-
 
     def _generate_sbatch(self):
         """
@@ -332,7 +332,7 @@ class CircleCISubmission(SherlockSubmission):
     """
     A CircleCI submission manager to work with the slurm docker image
     """
-    _default_settings = {
+    settings = {
         'nodes': 1,
         'time': '01:00:00',
         'partition': 'debug',

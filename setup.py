@@ -40,8 +40,8 @@ def main():
         package_data={'cappat': [
             'tpl/*.jnj2',
             'data/wrapper.sh',
-            'data/default_app_params.json'
-            'data/default_app_inputs.json',
+            'data/default_app_params.json',
+            'data/default_app_inputs.json'
         ]},
         entry_points={'console_scripts': [
             'cappwrapp=cappat.wrapper:main',
