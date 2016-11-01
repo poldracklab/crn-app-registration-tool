@@ -43,7 +43,8 @@ URL = 'http://{}.readthedocs.io/'.format(__packagename__)
 # Dependencies
 REQUIRES = [
     'jinja2',
-    'PyYAML'
+    'PyYAML',
+    'future'
 ]
 
 # Required before running setup()
