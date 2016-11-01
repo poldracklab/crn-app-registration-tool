@@ -11,9 +11,10 @@ import subprocess as sp
 import re
 from time import sleep
 import logging
-from pprint import pprint
+from pprint import pformat as pf
 from pkg_resources import resource_filename as pkgrf
 from io import open
+from builtins import object
 
 from cappat import AGAVE_JOB_LOGS, AGAVE_JOB_OUTPUT
 from cappat.tpl import Template
@@ -68,7 +69,7 @@ class TaskSubmissionBase(object):
     """
     A base class for task submission
     """
-    settings = None
+    _settings = {}
     jobexp = re.compile(r'Submitted batch job (?P<jobid>\d*)')
     _cmd_prefix = []
 
@@ -83,32 +84,29 @@ class TaskSubmissionBase(object):
         self.task_list = task_list
         self._jobs = {}
 
-        if self.settings is None:
-            self.settings = {}
-
         if settings is not None:
-            self.settings.update(settings)
+            self._settings.update(settings)
 
         if work_dir is None:
             work_dir = os.getcwd()
 
-        self.settings['child_runtime'] = _secs2time(
-            int(0.85 * _time2secs(self.settings['max_runtime'])))
+        self._settings['child_runtime'] = _secs2time(
+            int(0.85 * _time2secs(self._settings['max_runtime'])))
 
         self.work_dir = check_folder(op.abspath(work_dir))
         self.aux_dir = check_folder(op.join(self.work_dir, AGAVE_JOB_LOGS))
-        self.settings.update(
+        self._settings.update(
             {'work_dir': self.work_dir, 'aux_dir': self.aux_dir}
         )
         self.sbatch_files = self._generate_sbatch()
-        self._group_cmd = [self.settings['executable'], self.settings['bids_dir'],
+        self._group_cmd = [self._settings['executable'], self._settings['bids_dir'],
                            AGAVE_JOB_OUTPUT, 'group']
         JOB_LOG.info('Automatically inferred group level command: "%s"',
                       ' '.join(self.group_cmd))
 
-        self.settings['modules'] = _format_modules(self.settings.get('modules', []))
+        self._settings['modules'] = _format_modules(self._settings.get('modules', []))
         JOB_LOG.info('Created TaskManager type "%s" with default settings: \n\t%s',
-                     self.__class__.__name__, pprint(self.settings))
+                     self.__class__.__name__, pf(self._settings))
 
     @property
     def job_ids(self):
@@ -260,7 +258,7 @@ class TaskSubmissionBase(object):
         group_wrapper = 'group-wrapper.sh'
         conf = Template(self.GROUP_TEMPLATE)
         conf.generate_conf({
-            'modules': self.settings.get('modules', []),
+            'modules': self._settings.get('modules', []),
             'cmdline': ' '.join(self.group_cmd)
         }, group_wrapper)
 
@@ -291,8 +289,8 @@ class Lonestar5Submission(TaskSubmissionBase):
             'launcher_file': task,
             'nodes': nodes,
             'ncpus': 1,
-            'jobname': self.settings['job_name'],
-            'runtime': self.settings['child_runtime']
+            'jobname': self._settings['job_name'],
+            'runtime': self._settings['child_runtime']
         }
         launcher_cmd = """\
 export LAUNCHER_WORKDIR={cwd}; \
@@ -308,17 +306,17 @@ class SherlockSubmission(TaskSubmissionBase):
     """
 
     def __init__(self, task_list, settings=None, work_dir=None):
-        if settings.get('partition'):
-            settings['qos'] = settings.get('partition')
-
         super(SherlockSubmission, self).__init__(
             task_list, settings=settings, work_dir=work_dir)
+        self._settings['qos'] = self._settings['partition']
 
     def _generate_sbatch(self):
         """
         Generates one sbatch file per task
         """
-        settings = self.settings.copy()
+        settings = self._settings.copy()
+        JOB_LOG.info('Generating sbatch files with the following settings: \n\t%s',
+                     pf(settings))
         sbatch_files = []
         for i, task in enumerate(self.task_list):
             sbatch_files.append(op.join(self.aux_dir, 'slurm-%06d.sbatch' % i))
@@ -346,13 +344,13 @@ class CircleCISubmission(SherlockSubmission):
         Generates one sbatch file per task
         """
         # Remove default settings of Sherlock which are unsupported
-        self.settings.pop('qos', None)
-        self.settings.pop('mincpus', None)
-        self.settings.pop('mem_per_cpu', None)
-        self.settings.pop('modules', None)
-        self.settings['work_dir'] = self.settings['work_dir'].replace(
+        self._settings.pop('qos', None)
+        self._settings.pop('mincpus', None)
+        self._settings.pop('mem_per_cpu', None)
+        self._settings.pop('modules', None)
+        self._settings['work_dir'] = self._settings['work_dir'].replace(
             op.expanduser('~/'), '/')
-        self.settings['work_dir'] = self.settings['work_dir'].replace(
+        self._settings['work_dir'] = self._settings['work_dir'].replace(
             '~/', '/')
         return super(CircleCISubmission, self)._generate_sbatch()
 
@@ -371,11 +369,11 @@ class TestSubmission(SherlockSubmission):
         Generates one sbatch file per task
         """
         # Remove default settings of Sherlock not supported
-        self.settings.pop('qos', None)
-        self.settings.pop('mincpus', None)
-        self.settings.pop('mem_per_cpu', None)
-        self.settings.pop('modules', None)
-        self.settings.pop('srun_cmd', None)
+        self._settings.pop('qos', None)
+        self._settings.pop('mincpus', None)
+        self._settings.pop('mem_per_cpu', None)
+        self._settings.pop('modules', None)
+        self._settings.pop('srun_cmd', None)
         return super(TestSubmission, self)._generate_sbatch()
 
     def _submit_sbatch(self, task):
