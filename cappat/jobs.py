@@ -98,7 +98,6 @@ class TaskSubmissionBase(object):
         self._settings.update(
             {'work_dir': self.work_dir, 'aux_dir': self.aux_dir}
         )
-        self.sbatch_files = self._generate_sbatch()
         self._group_cmd = [self._settings['executable'], self._settings['bids_dir'],
                            AGAVE_JOB_OUTPUT, 'group']
         JOB_LOG.info('Automatically inferred group level command: "%s"',
@@ -209,7 +208,8 @@ class TaskSubmissionBase(object):
         """
         Submits a list of sbatch files and returns the assigned job ids
         """
-        for i, task in enumerate(self.sbatch_files):
+        sbatch_files = self._generate_sbatch()
+        for i, task in enumerate(sbatch_files):
             JOB_LOG.info('Submitting sbatch/launcher file %s (%d)', task, i)
             # run sbatch
             sresult = self._submit_sbatch(task)
