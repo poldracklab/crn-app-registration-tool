@@ -79,6 +79,46 @@
       }
     },
     {
+      "id": "participantArgs",
+      "value": {
+        "default": "",
+        "required": false,
+        "visible": false,
+        "type": "string",
+        "showArgument": false,
+        "argument": null
+      },
+      "semantics": {
+        "minCardinality": 1,
+        "maxCardinality": 1,
+        "ontology": ["xsd:string"]
+      },
+      "details": {
+        "description": "Additional arguments for the participant level",
+        "label": "P-Level Arguments"
+      }
+    },
+    {
+      "id": "groupArgs",
+      "value": {
+        "default": "",
+        "required": false,
+        "visible": false,
+        "type": "string",
+        "showArgument": false,
+        "argument": null
+      },
+      "semantics": {
+        "minCardinality": 1,
+        "maxCardinality": 1,
+        "ontology": ["xsd:string"]
+      },
+      "details": {
+        "description": "Additional arguments for the group level",
+        "label": "G-Level Arguments"
+      }
+    },
+    {
       "id": "subjectList",
       "value": {
         "default": "",

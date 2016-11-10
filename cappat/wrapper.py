@@ -118,7 +118,7 @@ def run_wrapper(opts):
     task_list = get_task_list(
         app_settings['bids_dir'], app_settings['executable'], subject_list,
         group_size=app_settings.get('parallel_npart', 1),
-        args=app_settings.get('args'))
+        args=app_settings.get('participant_args'))
     # TaskManager factory will return the appropriate submission object
     stm = cj.TaskManager.build(task_list, settings=app_settings)
     # Participant level mapping

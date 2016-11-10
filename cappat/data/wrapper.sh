@@ -24,6 +24,8 @@ echo "  memory_per_node: ${AGAVE_JOB_MEMORY_PER_NODE}" >> settings.yml
 echo "  cpu_per_node: ${AGAVE_JOB_PROCESSORS_PER_NODE}" >> settings.yml
 echo "  max_runtime: \"${AGAVE_JOB_MAX_RUNTIME}\"" >> settings.yml
 echo "  modules: ${loadModules}" >> settings.yml
+echo "  participant_args: ${participantArgs}" >> settings.yml
+echo "  group_args: ${groupArgs}" >> settings.yml
 
 echo "" >> settings.yml
 echo "agave:" >> settings.yml

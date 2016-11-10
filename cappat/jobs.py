@@ -99,7 +99,7 @@ class TaskSubmissionBase(object):
             {'work_dir': self.work_dir, 'aux_dir': self.aux_dir}
         )
         self._group_cmd = [self._settings['executable'], self._settings['bids_dir'],
-                           AGAVE_JOB_OUTPUT, 'group']
+                           AGAVE_JOB_OUTPUT, 'group', self._settings['group_args']]
         JOB_LOG.info('Automatically inferred group level command: "%s"',
                       ' '.join(self.group_cmd))
 

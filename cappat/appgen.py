@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2016-03-16 11:28:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-10-14 14:02:17
+# @Last Modified time: 2016-11-09 17:18:52
 
 """
 Agave app generator
@@ -253,6 +253,8 @@ CRN-platform""", formatter_class=RawTextHelpFormatter)
         else:
             g_optional.add_argument(
                 '--{}'.format(field), action='store', default=default_value)
+    g_optional = parser.add_argument('--participant-args', nargs='*')
+    g_optional = parser.add_argument('--group-args', nargs='*')
 
     g_outputs = parser.add_argument_group('Outputs')
     g_outputs.add_argument('-o', '--output', action='store')
@@ -285,9 +287,20 @@ CRN-platform""", formatter_class=RawTextHelpFormatter)
     # Set default parameters
     with open(pkgrf('cappat', 'data/default_app_params.json')) as defp:
         settings['parameters'] = json.load(defp)
-    settings['parameters'][1]['value']['default'] = opts.entry_point
-    settings['parameters'][0]['value']['default'] = opts.modules
+
+    arg_ids = [item['id'] for item in settings['parameters']]
+
+    settings['parameters'][arg_ids.index('loadModules')]['value']['default'] = opts.modules
+    settings['parameters'][arg_ids.index('execPath')]['value']['default'] = opts.entry_point
     settings.pop('modules', None)
+
+    if opts.participant_args:
+        settings['parameters'][arg_ids.index('participantArgs')]['value']['default'] = \
+            opts.participant_args
+
+    if opts.group_args:
+        settings['parameters'][arg_ids.index('groupArgs')]['value']['default'] = \
+            opts.group_args
 
     with open(pkgrf('cappat', 'data/default_app_inputs.json')) as defp:
         settings['inputs'] = json.load(defp)
