@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2016-03-16 11:28:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-11-10 14:33:06
+# @Last Modified time: 2016-11-10 14:37:58
 
 """
 Agave app generator
@@ -58,6 +58,7 @@ AGAVE_EXECUTION_SYSTEMS = [
 
 class CappatAgaveClient(object):
     AGAVE_CAPPAT_CLIENT = 'cappat-client'
+    AGAVE_BASEURL = 'https://api.tacc.utexas.edu'
     AGAVE_SESSION_FILE = op.expanduser('~/.agave/current')
 
     def __init__(self, app_desc=None, auth=None):
@@ -107,7 +108,7 @@ class CappatAgaveClient(object):
         do_retry = False
         try:
             self.agave = Agave(
-                api_server=session_data['baseurl'],
+                api_server=self.AGAVE_BASEURL,
                 username=auth[0],
                 password=auth[1],
                 client_name=client_name
@@ -119,7 +120,7 @@ class CappatAgaveClient(object):
 
         if do_retry:
             self.agave = Agave(
-                api_server=session_data['baseurl'],
+                api_server=self.AGAVE_BASEURL,
                 username=auth[0],
                 password=auth[1]
             )
