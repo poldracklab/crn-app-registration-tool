@@ -39,8 +39,8 @@ echo "  owner: ${AGAVE_JOB_OWNER}" >> settings.yml
 echo "  tenant: ${AGAVE_JOB_TENANT}" >> settings.yml
 echo "  submit_time: ${AGAVE_JOB_SUBMIT_TIME}" >> settings.yml
 
-# Ensure we load the module
-module load crnenv
+# Ensure we load the module - should be fixed in agave.
+# module load crnenv
 cappwrapp settings.yml 2>> log/errors.txt 1>> log/logfile.txt
 wrapper_code=$?
 
@@ -50,7 +50,7 @@ if [[ "${wrapper_code}" -gt "0" ]]; then
 fi
 
 echo "***** Dumping .out logs into logfile.txt *****" >> log/logfile.txt
-for outlog in log/*.out; do
+for outlog in $( find ./log/ -name "*.out" ); do
     if [[ "$(stat --printf="%s" $outlog)" -gt "0" ]]; then
         echo "** $outlog:" >> log/logfile.txt
         cat $outlog >> log/logfile.txt
@@ -66,7 +66,7 @@ done
 
 # Check output error logs are empty
 echo "***** Dumping error logs into logfile.txt *****" >> log/logfile.txt
-for errlog in log/*.err; do
+for errlog in $( find ./log/ -name "*.err" ); do
     if [[ "$(stat --printf="%s" $errlog)" -gt "0" ]]; then
         echo "** $errlog:" >> log/logfile.txt
         cat $errlog >> log/logfile.txt

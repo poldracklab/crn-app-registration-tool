@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2016-03-16 11:28:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-11-09 17:18:52
+# @Last Modified time: 2016-11-10 14:37:58
 
 """
 Agave app generator
@@ -13,6 +13,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import os
 import os.path as op
+from socket import gethostname
 from argparse import ArgumentParser, RawTextHelpFormatter
 import logging
 import json
@@ -57,6 +58,7 @@ AGAVE_EXECUTION_SYSTEMS = [
 
 class CappatAgaveClient(object):
     AGAVE_CAPPAT_CLIENT = 'cappat-client'
+    AGAVE_BASEURL = 'https://api.tacc.utexas.edu'
     AGAVE_SESSION_FILE = op.expanduser('~/.agave/current')
 
     def __init__(self, app_desc=None, auth=None):
@@ -72,59 +74,67 @@ class CappatAgaveClient(object):
 
         # CAPPAT works only with the crnenv loaded
         self.app_desc['modules'] = ['load crnenv']
+        client_name = '{}-{}'.format(self.AGAVE_CAPPAT_CLIENT, gethostname())
 
-        with open(self.AGAVE_SESSION_FILE, 'r') as asf:
-            session_data = json.load(asf)
+        if op.isfile(self.AGAVE_SESSION_FILE):
+            with open(self.AGAVE_SESSION_FILE, 'r') as asf:
+                session_data = json.load(asf)
 
-        for key in ['access_token', 'refresh_token', 'baseurl',
-                    'apikey', 'apisecret']:
-            if not session_data.get(key):
-                raise RuntimeError('{} required'.format())
+            for key in ['access_token', 'refresh_token', 'baseurl',
+                        'apikey', 'apisecret']:
+                if not session_data.get(key):
+                    raise RuntimeError('{} required'.format())
 
-        self.agave = Agave(
-            api_server=session_data['baseurl'],
-            api_key=session_data['apikey'],
-            api_secret=session_data['apisecret'],
-            token=session_data['access_token'],
-            refresh_token=session_data['refresh_token'],
-            client_name=self.AGAVE_CAPPAT_CLIENT,
-            verify=session_data.get('verify', False)
-        )
+            self.agave = Agave(
+                api_server=session_data['baseurl'],
+                api_key=session_data['apikey'],
+                api_secret=session_data['apisecret'],
+                token=session_data['access_token'],
+                refresh_token=session_data['refresh_token'],
+                client_name=client_name,
+                verify=session_data.get('verify', False)
+            )
 
+            try:
+                clients = self.agave.clients.list()
+                return
+            except AttributeError:
+                if auth is None or auth[0] is None or auth[1] is None:
+                    raise RuntimeError('Agave failed to authenticate')
+
+            logger.warn('Agave token could not be reused, trying to '
+                        'access using username and password.')
+
+        do_retry = False
         try:
-            clients = self.agave.clients.list()
-            return
-        except AttributeError:
-            if auth is None or auth[0] is None or auth[1] is None:
-                raise RuntimeError('Agave failed to authenticate')
+            self.agave = Agave(
+                api_server=self.AGAVE_BASEURL,
+                username=auth[0],
+                password=auth[1],
+                client_name=client_name
+            )
+        except KeyError:
+            logger.warn('Agave client "%s" could not be engaged, trying to '
+                        'access using username and password.', client_name)
+            do_retry = True
 
-        logger.warn('Agave token could not be reused, trying to '
-                    'access using username and password.')
-        self.agave = Agave(
-            api_server=session_data['baseurl'],
-            username=auth[0],
-            password=auth[1],
-            client_name=self.AGAVE_CAPPAT_CLIENT
-        )
+        if do_retry:
+            self.agave = Agave(
+                api_server=self.AGAVE_BASEURL,
+                username=auth[0],
+                password=auth[1]
+            )
 
         try:
             clients = [c['name'] for c in self.agave.clients.list()]
-            return
         except AttributeError:
             if auth[0] is None or auth[1] is None:
                 raise RuntimeError('Agave failed to authenticate')
 
-        logger.warn('Agave client could not be engaged, trying to '
-                    'access using username and password.')
-        self.agave = Agave(
-            api_server=session_data['baseurl'],
-            username=auth[0],
-            password=auth[1]
-        )
-        if self.AGAVE_CAPPAT_CLIENT in clients:
-            self.agave.clients.delete(self.AGAVE_CAPPAT_CLIENT)
+        if client_name in clients:
+            self.agave.clients.delete(client_name)
         self.agave.clients.create(
-            body={'clientName': self.AGAVE_CAPPAT_CLIENT})
+            body={'clientName': client_name})
 
 
     def _upload_file(self, fname, remote_path, remote_fname=None,

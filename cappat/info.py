@@ -44,7 +44,8 @@ URL = 'http://{}.readthedocs.io/'.format(__packagename__)
 REQUIRES = [
     'jinja2',
     'PyYAML',
-    'future'
+    'future',
+    'agavepy'
 ]
 
 # Required before running setup()
