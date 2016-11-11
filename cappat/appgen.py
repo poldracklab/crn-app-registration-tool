@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2016-03-16 11:28:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-11-10 14:37:58
+# @Last Modified time: 2016-11-11 11:45:16
 
 """
 Agave app generator
@@ -131,10 +131,10 @@ class CappatAgaveClient(object):
             if auth[0] is None or auth[1] is None:
                 raise RuntimeError('Agave failed to authenticate')
 
-        if client_name in clients:
-            self.agave.clients.delete(client_name)
-        self.agave.clients.create(
-            body={'clientName': client_name})
+        if client_name not in clients:
+            logger.info('creating new client "%s"', client_name)
+            self.agave.clients.create(
+                body={'clientName': client_name})
 
 
     def _upload_file(self, fname, remote_path, remote_fname=None,
