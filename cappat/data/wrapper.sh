@@ -57,7 +57,7 @@ for outlog in $( find ./log/ -name "*.out" ); do
 
         if grep -q ERROR "$outlog"; then
             echo "Error found in $outlog" >> log/errors.txt
-            ${AGAVE_JOB_CALLBACK_FAILURE}
+            ${AGAVE_JOB_CALLBACK_NOTIFICATION|JOB_TASK_FAILURE|}
         fi
     fi
     mv $outlog ./
@@ -73,7 +73,7 @@ for errlog in $( find ./log/ -name "*.err" ); do
 
         if grep -q ERROR "$errlog"; then
             echo "Error found in error log $errlog" >> log/errors.txt
-            ${AGAVE_JOB_CALLBACK_FAILURE}
+            ${AGAVE_JOB_CALLBACK_NOTIFICATION|JOB_TASK_FAILURE|}
         fi
     fi
     mv $errlog ./
