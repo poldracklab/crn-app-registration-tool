@@ -129,11 +129,14 @@ class TaskSubmissionBase(object):
             raise RuntimeError('sacct command output is empty')
 
         #parse results
+        regexp = re.compile('(?P<jobid>\\d*) +(?P<status>\\w*)\\+? +'
+                            '(?P<exit_code>\\d+):\\d+')
         exit_codes = []
         for line in results.split('\n'):
-            fields = line.split()
-            self._jobs[fields[0]] = fields[1]
-            exit_codes.append(int(fields[2].split(':')[0]))
+            m = regexp.search(line)
+            if m is not None and all(m.groups()):
+                self._jobs[m.groups('jobid')] = m.groups('status')
+                exit_codes.append(int(m.groups('exit_code')))
         return exit_codes
 
     def _get_jobs_status(self):
@@ -150,22 +153,19 @@ class TaskSubmissionBase(object):
             return True
 
         pending = []
-        sqexp = re.compile(
-            '(?P<jobid>\\d*),(?P<jobstatus>[' + '|'.join(SLURM_WAIT_STATUS) + ']*)')
+        sqexp = re.compile('(?P<jobid>\\d*),(?P<jobstatus>[' +
+                           '|'.join(SLURM_WAIT_STATUS + SLURM_FAIL_STATUS) + ']*)')
         statuses = squeue.split('\n')
         for line in statuses:
             m = sqexp.search(line)
+            if m is not None and all(m.groups()):
+                status = m.groups()
+                self._jobs[status[0]] = status[1]
 
-            if m is None or not all(m.groups()):
-                continue
-
-            status = m.groups()
-            self._jobs[status[0]] = status[1]
-
-            if status in SLURM_FAIL_STATUS:
-                JOB_LOG.warn('Job id %s failed (%s).', *status)
-            else:
-                pending.append(status[0])
+                if status[1] in SLURM_FAIL_STATUS:
+                    JOB_LOG.warn('Job id %s failed (%s).', *status)
+                else:
+                    pending.append(status[0])
 
         if pending:
             JOB_LOG.info('There are pending jobs: %s', ' '.join(pending))
