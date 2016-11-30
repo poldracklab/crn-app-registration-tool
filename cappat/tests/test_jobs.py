@@ -53,9 +53,9 @@ def test_job_run():
     slurm.map_participant()
     assert len(slurm.wait_participant()) == 3
 
-@mock.patch('cappat.jobs.TestSubmission._get_jobs_status',
+@mock.patch('cappat.manager.slurm.TestSubmission._get_jobs_status',
             mock.Mock(return_value=True))
-@mock.patch('cappat.jobs.TestSubmission._run_sacct',
+@mock.patch('cappat.manager.slurm.TestSubmission._run_sacct',
             mock.Mock(return_value='49533   FAILED   113:0'))
 def test_job_fail():
     tasks = ['echo "Submitted batch job 49533"']
