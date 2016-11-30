@@ -135,8 +135,8 @@ class TaskSubmissionBase(object):
         for line in results.split('\n'):
             m = regexp.search(line)
             if m is not None and all(m.groups()):
-                self._jobs[m.groups('jobid')] = m.groups('status')
-                exit_codes.append(int(m.groups('exit_code')))
+                self._jobs[m.group('jobid')] = m.group('status')
+                exit_codes.append(int(m.group('exit_code')))
         return exit_codes
 
     def _get_jobs_status(self):
