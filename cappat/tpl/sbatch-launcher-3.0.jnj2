@@ -9,8 +9,8 @@
 #SBATCH -t {{runtime}}
 #SBATCH -p {{partition}}
 #SBATCH -J {{jobname}}
-#SBATCH -o log/bidsapp-%j.out
-#SBATCH -e log/bidsapp-%j.err
+#SBATCH -o {{work_dir}}/log/bidsapp-%j.out
+#SBATCH -e {{work_dir}}/log/bidsapp-%j.err
 #------------------General Options---------------------
 
 module load launcher/3.0.1
