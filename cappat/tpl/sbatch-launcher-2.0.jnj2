@@ -1,10 +1,10 @@
 #!/bin/bash
 #
 #------------------Scheduler Options--------------------
-#SBATCH -N {{nodes}}           # Total number of nodes
-#SBATCH -n {{ntasks}}          # Total number of tasks
-#SBATCH -t {{child_runtime}}   # Run time (hh:mm:ss)
-#SBATCH -p {{partition}}       # Queue name
+#SBATCH -N {{nodes}}
+#SBATCH -n {{ntasks}}
+#SBATCH -t {{runtime}}
+#SBATCH -p {{partition}}
 #SBATCH -J {{jobname}}
 #SBATCH -o {{work_dir}}/log/bidsapp-%j.out
 #SBATCH -e {{work_dir}}/log/bidsapp-%j.err
