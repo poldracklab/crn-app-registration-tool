@@ -5,6 +5,8 @@
 """
 Utilities: Agave wrapper for sherlock
 """
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import os
 from os import path as op
 import re
@@ -17,10 +19,8 @@ from builtins import object
 from cappat import AGAVE_JOB_LOGS, AGAVE_JOB_OUTPUT
 from ..tpl import Template
 from ..utils import check_folder
-from .slurm import (SherlockSubmission, CircleCISubmission, TestSubmission)
-from .launcher import (Lonestar5Submission)
+
 from .tools import (
-    getsystemname as _getsystemname,
     time_fraction as _tf,
     format_modules as _format_modules,
     run_cmd as _run_cmd)
@@ -30,45 +30,6 @@ SLURM_WAIT_STATUS = ['R', 'PD', 'CF', 'CG']
 SLEEP_SECONDS = 5
 
 JOB_LOG = logging.getLogger('taskmanager')
-
-
-class TaskManager(object):
-    """
-    A task manager factory class
-    """
-    def __init__(self):
-        raise RuntimeError('This class cannot be instatiated.')
-
-    @staticmethod
-    def build(task_list, settings=None, work_dir=None,
-              hostname=None):
-        """
-        Get the appropriate TaskManager object
-        """
-        hostname = settings.get('execution_system', None)
-
-        if hostname is None:
-            hostname = _getsystemname()
-
-        JOB_LOG.info('Identified host: "%s"', hostname)
-
-        if not hostname:
-            raise RuntimeError('Could not identify execution system')
-
-        if hostname.endswith('ls5.tacc.utexas.edu'):
-            return Lonestar5Submission(task_list, settings, work_dir)
-        elif hostname.endswith('stanford.edu'):
-            return SherlockSubmission(task_list, settings, work_dir)
-        elif hostname.endswith('stampede.tacc.utexas.edu'):
-            raise NotImplementedError
-        elif hostname == 'test.circleci':
-            return CircleCISubmission(task_list, settings, work_dir)
-        elif hostname == 'test.local':
-            return TestSubmission(task_list, settings, work_dir)
-        else:
-            raise RuntimeError(
-                'Could not identify "{}" as a valid execution system'.format(hostname))
-
 
 class TaskSubmissionBase(object):
     """
