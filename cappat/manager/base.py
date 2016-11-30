@@ -136,7 +136,11 @@ class TaskSubmissionBase(object):
             m = regexp.search(line)
             if m is not None and all(m.groups()):
                 self._jobs[m.group('jobid')] = m.group('status')
-                exit_codes.append(int(m.group('exit_code')))
+                if not m.group('status').startswith('CANCEL'):
+                    exit_codes.append(int(m.group('exit_code')))
+                else:
+                    exit_codes.append(128)
+
         return exit_codes
 
     def _get_jobs_status(self):

@@ -15,7 +15,7 @@
 
 module load launcher/3.0.1
 export LAUNCHER_WORKDIR={{work_dir}}
-export LAUNCHER_JOB_FILE={{task_file}}
+export LAUNCHER_JOB_FILE={{tasks_file}}
 export LAUNCHER_PLUGIN_DIR=$LAUNCHER_DIR/plugins
 
 #------------ Task Scheduling Options -----------------
