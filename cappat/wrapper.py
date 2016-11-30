@@ -79,7 +79,7 @@ def run_wrapper(opts):
     """
     A python wrapper to BIDS-Apps for Agave
     """
-    from cappat.manager.base import TaskManager
+    from cappat.manager.factory import TaskManager
     from cappat.utils import check_folder
 
     # Read settings from yml
