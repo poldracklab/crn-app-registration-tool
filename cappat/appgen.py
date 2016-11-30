@@ -86,12 +86,14 @@ class CappatAgaveClient(object):
                     raise RuntimeError('{} required'.format())
 
             self.agave = Agave(
-                api_server=session_data['baseurl'],
-                api_key=session_data['apikey'],
-                api_secret=session_data['apisecret'],
-                token=session_data['access_token'],
-                refresh_token=session_data['refresh_token'],
-                client_name=client_name,
+                api_server=session_data['baseurl'].decode(),
+                api_key=session_data['apikey'].decode(),
+                api_secret=session_data['apisecret'].decode(),
+                token=session_data['access_token'].decode(),
+                username=auth[0],
+                password=auth[1],
+                refresh_token=session_data['refresh_token'].decode(),
+                client_name=client_name.decode(),
                 verify=session_data.get('verify', False)
             )
 
@@ -99,11 +101,9 @@ class CappatAgaveClient(object):
                 clients = self.agave.clients.list()
                 return
             except AttributeError:
-                if auth is None or auth[0] is None or auth[1] is None:
-                    raise RuntimeError('Agave failed to authenticate')
+                logger.warn('Agave token could not be reused, trying to '
+                            'access using username and password.')
 
-            logger.warn('Agave token could not be reused, trying to '
-                        'access using username and password.')
 
         do_retry = False
         try:
@@ -300,7 +300,8 @@ CRN-platform""", formatter_class=RawTextHelpFormatter)
 
     arg_ids = [item['id'] for item in settings['parameters']]
 
-    settings['parameters'][arg_ids.index('loadModules')]['value']['default'] = opts.modules
+    settings['parameters'][arg_ids.index('loadModules')]['value']['default'] = \
+        opts.modules if opts.modules else ''
     settings['parameters'][arg_ids.index('execPath')]['value']['default'] = opts.entry_point
     settings.pop('modules', None)
 

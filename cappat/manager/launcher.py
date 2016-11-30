@@ -21,7 +21,8 @@ class LauncherSubmission(TaskSubmissionBase):
     """
     _cmd_prefix = ['ssh', '-oStrictHostKeyChecking=no', 'login2']
     SLURM_MAXNODES = 40
-    SLURM_TEMPLATE = op.abspath(pkgrf('cappat', 'tpl/sbatch-launcher-2.0.jnj2'))
+    SLURM_MAXCPUS = 16
+    SLURM_TEMPLATE = op.abspath(pkgrf('cappat', 'tpl/sbatch-launcher-3.0.jnj2'))
 
     def _generate_sbatch(self):
         """
@@ -41,7 +42,7 @@ class LauncherSubmission(TaskSubmissionBase):
             'jobname': self._settings.get('job_name', 'openneuro'),
             'work_dir': os.getcwd(),
             'tasks_file': tasks_file,
-            'ncpus': self._settings.get('ncpus', 16),
+            'ncpus': self._settings.get('ncpus', self.SLURM_MAXCPUS),
             'tasks_per_node': 1,
         }
 
@@ -56,4 +57,3 @@ class Lonestar5Submission(LauncherSubmission):
     The LS5 submission manager
     """
     SLURM_MAXCPUS = 24
-    SLURM_TEMPLATE = op.abspath(pkgrf('cappat', 'tpl/sbatch-launcher-3.0.jnj2'))
