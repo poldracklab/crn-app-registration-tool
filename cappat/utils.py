@@ -7,7 +7,6 @@ Utilities: helper functions
 """
 import os
 from os import path as op
-import socket
 from errno import EEXIST
 
 def check_folder(folder):
@@ -21,19 +20,3 @@ def check_folder(folder):
             if not exc.errno == EEXIST:
                 raise
     return folder
-
-
-def getsystemname():
-    """
-    Queries the host name. If for some reason (i.e. ls5) it returns
-    not enough information to identify the host, queries all the IPs
-    """
-    hostname = socket.gethostname()
-
-    if '.' not in hostname:
-        # This is here because ls5 returns only the node name
-        fqdns = list(
-            set([socket.getfqdn(i[4][0])
-                 for i in socket.getaddrinfo(socket.gethostname(), None)]))
-        hostname = fqdns[0]
-    return hostname

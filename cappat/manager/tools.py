@@ -8,6 +8,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from builtins import str
 import logging
 import subprocess as sp
+import socket
 
 JOB_LOG = logging.getLogger('taskmanager')
 
@@ -67,6 +68,23 @@ def format_modules(modules_list):
 def time_fraction(timestr, fraction=0.90):
     """Returns a time string which is the fraction of the input"""
     return _secs2time(int(fraction * _time2secs(timestr)))
+
+
+def getsystemname():
+    """
+    Queries the host name. If for some reason (i.e. ls5) it returns
+    not enough information to identify the host, queries all the IPs
+    """
+    hostname = socket.gethostname()
+
+    if '.' not in hostname:
+        # This is here because ls5 returns only the node name
+        fqdns = list(
+            set([socket.getfqdn(i[4][0])
+                 for i in socket.getaddrinfo(socket.gethostname(), None)]))
+        hostname = fqdns[0]
+    return hostname
+
 
 def _time2secs(timestr):
     return sum((60**i) * int(t) for i, t in enumerate(reversed(timestr.split(':'))))

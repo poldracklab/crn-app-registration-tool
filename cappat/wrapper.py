@@ -120,7 +120,7 @@ def run_wrapper(opts):
         group_size=app_settings.get('parallel_npart', 1),
         args=app_settings.get('participant_args'))
 
-    app_settings['ncpus'] = getenv('CAPPAT_SYSTEM_NCPUS', 16)
+    app_settings['ncpus'] = getenv('CRNENV_SYSTEM_NCPUS', 16)
     # TaskManager factory will return the appropriate submission object
     stm = TaskManager.build(task_list, settings=app_settings)
     # Participant level mapping
