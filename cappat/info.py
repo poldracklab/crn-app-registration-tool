@@ -44,8 +44,7 @@ URL = 'http://{}.readthedocs.io/'.format(__packagename__)
 REQUIRES = [
     'jinja2',
     'PyYAML',
-    'future',
-    'agavepy'
+    'future'
 ]
 
 # Required before running setup()
@@ -63,6 +62,7 @@ TESTS_REQUIRES = [
 # Dependencies to install for extra features
 # For now, only documentation is enabled. Install with pip install -e .[doc]
 EXTRA_REQUIRES = {
+    'appgen': ['agavepy'],
     'doc': ['sphinx'],
     'tests': TESTS_REQUIRES,
 }

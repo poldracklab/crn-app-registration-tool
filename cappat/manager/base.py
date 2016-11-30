@@ -16,10 +16,11 @@ from builtins import object
 
 from cappat import AGAVE_JOB_LOGS, AGAVE_JOB_OUTPUT
 from ..tpl import Template
-from ..utils import check_folder, getsystemname
+from ..utils import check_folder
 from .slurm import (SherlockSubmission, CircleCISubmission, TestSubmission)
 from .launcher import (Lonestar5Submission)
 from .tools import (
+    getsystemname as _getsystemname,
     time_fraction as _tf,
     format_modules as _format_modules,
     run_cmd as _run_cmd)
@@ -47,7 +48,7 @@ class TaskManager(object):
         hostname = settings.get('execution_system', None)
 
         if hostname is None:
-            hostname = getsystemname()
+            hostname = _getsystemname()
 
         JOB_LOG.info('Identified host: "%s"', hostname)
 
