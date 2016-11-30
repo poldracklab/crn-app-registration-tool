@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 
 from .slurm import (SherlockSubmission, CircleCISubmission, TestSubmission)
-from .launcher import (Lonestar5Submission)
+from .launcher import (LauncherSubmission, Lonestar5Submission)
 from .tools import getsystemname as _getsystemname
 
 JOB_LOG = logging.getLogger('taskmanager')
@@ -40,10 +40,10 @@ class TaskManager(object):
 
         if hostname.endswith('ls5.tacc.utexas.edu'):
             return Lonestar5Submission(task_list, settings, work_dir)
+        elif hostname.endswith('stampede.tacc.utexas.edu'):
+            return LauncherSubmission(task_list, settings, work_dir)
         elif hostname.endswith('stanford.edu'):
             return SherlockSubmission(task_list, settings, work_dir)
-        elif hostname.endswith('stampede.tacc.utexas.edu'):
-            raise NotImplementedError
         elif hostname == 'test.circleci':
             return CircleCISubmission(task_list, settings, work_dir)
         elif hostname == 'test.local':
