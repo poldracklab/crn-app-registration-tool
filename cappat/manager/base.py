@@ -154,11 +154,12 @@ class TaskSubmissionBase(object):
             '(?P<jobid>\\d*),(?P<jobstatus>[' + '|'.join(SLURM_WAIT_STATUS) + ']*)')
         statuses = squeue.split('\n')
         for line in statuses:
-            status = sqexp.search(line).groups()
+            m = sqexp.search(line)
 
-            if not status[0] or not status[1]:
+            if m is None or not all(m.groups()):
                 continue
 
+            status = m.groups()
             self._jobs[status[0]] = status[1]
 
             if status in SLURM_FAIL_STATUS:
