@@ -5,14 +5,14 @@
 """
 The Agave wrapper in python
 """
-from os import path as op
+from os import path as op, getenv
 from glob import glob
 from random import shuffle
 from argparse import ArgumentParser, RawTextHelpFormatter
 from textwrap import dedent
 import logging
 from yaml import load as loadyml
-from cappat import __version__, AGAVE_JOB_LOGS, AGAVE_JOB_OUTPUT
+from cappat import __version__, AGAVE_JOB_OUTPUT
 
 
 wlogger = logging.getLogger('wrapper')
@@ -79,7 +79,7 @@ def run_wrapper(opts):
     """
     A python wrapper to BIDS-Apps for Agave
     """
-    import cappat.jobs as cj
+    from cappat.manager.base import TaskManager
     from cappat.utils import check_folder
 
     # Read settings from yml
@@ -119,8 +119,10 @@ def run_wrapper(opts):
         app_settings['bids_dir'], app_settings['executable'], subject_list,
         group_size=app_settings.get('parallel_npart', 1),
         args=app_settings.get('participant_args'))
+
+    app_settings['ncpus'] = getenv('CAPPAT_SYSTEM_NCPUS', 16)
     # TaskManager factory will return the appropriate submission object
-    stm = cj.TaskManager.build(task_list, settings=app_settings)
+    stm = TaskManager.build(task_list, settings=app_settings)
     # Participant level mapping
     stm.map_participant()
     # Participant level polling
@@ -136,21 +138,22 @@ def run_wrapper(opts):
 
     # Clean up
 
+def parser():
+    argparser = ArgumentParser(formatter_class=RawTextHelpFormatter, description=dedent('''\
+        cappwrapp: The CRN's APP WRAPPer tool
+        -------------------------------------
 
+    '''))
+
+    argparser.add_argument('-v', '--version', action='version',
+                        version='BIDS-Apps wrapper v{}'.format(__version__))
+    argparser.add_argument('settings', action='store', help='settings file')
+    return argparser
 
 def main():
     """Entry point"""
-    parser = ArgumentParser(formatter_class=RawTextHelpFormatter, description=dedent(
-'''The Agave wrapper in python
----------------------------
-
-
-'''))
-
-    parser.add_argument('-v', '--version', action='version',
-                        version='BIDS-Apps wrapper v{}'.format(__version__))
-    parser.add_argument('settings', action='store', help='settings file')
-    run_wrapper(parser.parse_args())
+    args = parser().parse_args()
+    run_wrapper(args)
 
 if __name__ == '__main__':
     main()

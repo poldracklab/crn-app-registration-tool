@@ -7,18 +7,22 @@ Utilities: Agave wrapper for sherlock
 """
 import os
 from os import path as op
-import subprocess as sp
 import re
 from time import sleep
 import logging
 from pprint import pformat as pf
 from pkg_resources import resource_filename as pkgrf
-from io import open
 from builtins import object
 
 from cappat import AGAVE_JOB_LOGS, AGAVE_JOB_OUTPUT
-from cappat.tpl import Template
-from cappat.utils import check_folder, getsystemname
+from ..tpl import Template
+from ..utils import check_folder, getsystemname
+from .slurm import (SherlockSubmission, CircleCISubmission, TestSubmission)
+from .launcher import (Lonestar5Submission)
+from .tools import (
+    time_fraction as _tf,
+    format_modules as _format_modules,
+    run_cmd as _run_cmd)
 
 SLURM_FAIL_STATUS = ['CA', 'F', 'TO', 'NF', 'SE']
 SLURM_WAIT_STATUS = ['R', 'PD', 'CF', 'CG']
@@ -73,7 +77,7 @@ class TaskSubmissionBase(object):
     jobexp = re.compile(r'Submitted batch job (?P<jobid>\d*)')
     _cmd_prefix = []
 
-    SLURM_TEMPLATE = op.abspath(pkgrf('cappat', 'tpl/sherlock-sbatch.jnj2'))
+    SLURM_TEMPLATE = None
     GROUP_TEMPLATE = op.abspath(pkgrf('cappat', 'tpl/group-wrapper.jnj2'))
 
     def __init__(self, task_list, settings=None, work_dir=None):
@@ -90,8 +94,7 @@ class TaskSubmissionBase(object):
         if work_dir is None:
             work_dir = os.getcwd()
 
-        self._settings['child_runtime'] = _secs2time(
-            int(0.85 * _time2secs(self._settings['max_runtime'])))
+        self._settings['child_runtime'] = _tf(self._settings['max_runtime'])
 
         self.work_dir = check_folder(op.abspath(work_dir))
         self.aux_dir = check_folder(op.join(self.work_dir, AGAVE_JOB_LOGS))
@@ -105,7 +108,7 @@ class TaskSubmissionBase(object):
             self._group_cmd += [self._settings.get('group_args')]
 
         JOB_LOG.info('Automatically inferred group level command: "%s"',
-                      ' '.join(self.group_cmd))
+                     ' '.join(self.group_cmd))
 
         self._settings['modules'] = _format_modules(self._settings.get('modules', []))
         JOB_LOG.info('Created TaskManager type "%s" with default settings: \n\t%s',
@@ -270,182 +273,3 @@ class TaskSubmissionBase(object):
             JOB_LOG.info('Group level finished successfully.')
             return True
         return False
-
-class Lonestar5Submission(TaskSubmissionBase):
-    """
-    The LS5 submission manager
-    """
-
-    def _generate_sbatch(self):
-        """
-        Generates one launcher file
-        """
-        launcher_file = op.join(self.aux_dir, 'launch_script.sh')
-        with open(launcher_file, 'w') as lfh:
-            lfh.write('\n'.join(self.task_list) + '\n')
-        return [launcher_file]
-
-    def _submit_sbatch(self, task):
-        with open(task, 'r') as tfh:
-            nodes = sum(1 for line in tfh if line.strip() and not line.strip().startswith('#'))
-        values = {
-            'cwd': os.getcwd(),
-            'launcher_file': task,
-            'nodes': nodes,
-            'ncpus': 1,
-            'jobname': self._settings['job_name'],
-            'runtime': self._settings['child_runtime']
-        }
-        launcher_cmd = """\
-export LAUNCHER_WORKDIR={cwd}; \
-/corral-repl/utexas/poldracklab/users/wtriplet/external/ls5_launch/launch -s {launcher_file} \
--n {ncpus} -N {nodes} -d {cwd} -r {runtime} -j {jobname} -f {cwd}/{jobname}.qsub \
-""".format(**values)
-        return _run_cmd(['ssh', '-oStrictHostKeyChecking=no', 'login2', launcher_cmd])
-
-
-class SherlockSubmission(TaskSubmissionBase):
-    """
-    The Sherlock submission
-    """
-
-    def __init__(self, task_list, settings=None, work_dir=None):
-        super(SherlockSubmission, self).__init__(
-            task_list, settings=settings, work_dir=work_dir)
-        self._settings['qos'] = self._settings['partition']
-
-    def _generate_sbatch(self):
-        """
-        Generates one sbatch file per task
-        """
-        settings = self._settings.copy()
-        JOB_LOG.info('Generating sbatch files with the following settings: \n\t%s',
-                     pf(settings))
-        sbatch_files = []
-        for i, task in enumerate(self.task_list):
-            sbatch_files.append(op.join(self.aux_dir, 'slurm-%06d.sbatch' % i))
-            settings['commandline'] = task
-            conf = Template(self.SLURM_TEMPLATE)
-            conf.generate_conf(settings, sbatch_files[-1])
-        return sbatch_files
-
-
-class CircleCISubmission(SherlockSubmission):
-    """
-    A CircleCI submission manager to work with the slurm docker image
-    """
-    settings = {
-        'nodes': 1,
-        'time': '01:00:00',
-        'partition': 'debug',
-        'job_name': 'crn-bidsapp'
-    }
-    _cmd_prefix = ['sshpass', '-p', 'testpass',
-                   'ssh', '-p', '10022', 'circleci@localhost']
-
-    def _generate_sbatch(self):
-        """
-        Generates one sbatch file per task
-        """
-        # Remove default settings of Sherlock which are unsupported
-        self._settings.pop('qos', None)
-        self._settings.pop('mincpus', None)
-        self._settings.pop('mem_per_cpu', None)
-        self._settings.pop('modules', None)
-        self._settings['work_dir'] = self._settings['work_dir'].replace(
-            op.expanduser('~/'), '/')
-        self._settings['work_dir'] = self._settings['work_dir'].replace(
-            '~/', '/')
-        return super(CircleCISubmission, self)._generate_sbatch()
-
-    def _submit_sbatch(self, task):
-        # Fix paths for docker image in CircleCI
-        task = task.replace(op.expanduser('~/'), '/')
-        task = task.replace('~/', '/')
-        return super(CircleCISubmission, self)._submit_sbatch(task)
-
-class TestSubmission(SherlockSubmission):
-    """
-    A Test submission manager to work with the slurm docker image
-    """
-    def _generate_sbatch(self):
-        """
-        Generates one sbatch file per task
-        """
-        # Remove default settings of Sherlock not supported
-        self._settings.pop('qos', None)
-        self._settings.pop('mincpus', None)
-        self._settings.pop('mem_per_cpu', None)
-        self._settings.pop('modules', None)
-        self._settings.pop('srun_cmd', None)
-        return super(TestSubmission, self)._generate_sbatch()
-
-    def _submit_sbatch(self, task):
-        return _run_cmd(['/bin/bash', task])
-
-    def _get_jobs_status(self):
-        jobs = ['%s,COMPLETED' % j for j in self.job_ids]
-        return _run_cmd(['echo', '\n'.join(jobs)]).strip()
-
-    def _run_sacct(self):
-        return '\n'.join(['%s  COMPLETED  0:0' % j for j in self.job_ids])
-
-def _run_cmd(cmd, shell=False, env=None):
-    JOB_LOG.info('Executing command line: %s', ' '.join(cmd))
-    try:
-        result = sp.check_output(cmd, stderr=sp.STDOUT, shell=shell, env=env)
-    except sp.CalledProcessError as error:
-        JOB_LOG.critical('Error submitting (exit code %d): \n\tCmdline: %s\n\tOutput:\n\t%s',
-                         error.returncode, ' '.join(cmd), error.output)
-        raise
-    result = '\n'.join([line for line in result.split('\n') if line.strip()])
-    if not result:
-        JOB_LOG.info('Command output was empty')
-        return None
-
-    JOB_LOG.info('Command output: \n%s', result)
-    return result
-
-def _format_modules(modules_list):
-    if not modules_list:
-        return None
-
-    if isinstance(modules_list, list):
-        modules_list = ' '.join(modules_list)
-    modules_list = modules_list.split(' ')
-
-    JOB_LOG.info('Formatting modules list...')
-    modules_load = []
-    modules_use = []
-    _is_load = False
-    for i, mod in enumerate(modules_list):
-        if mod == 'module':
-            _is_load = False
-        elif mod == 'use':
-            _is_load = False
-            modules_use.append(modules_list[i+1])
-        elif mod == 'load':
-            _is_load = True
-        elif _is_load:
-            modules_load.append(mod)
-
-    modtext = []
-    if modules_use:
-        modtext.append('module use ' + ' '.join(modules_use))
-
-    if not modules_load:
-        JOB_LOG.warn('No modules to load were found.')
-    else:
-        modtext.append('module load ' + ' '.join(modules_load))
-
-    return modtext
-
-
-def _time2secs(timestr):
-    return sum((60**i) * int(t) for i, t in enumerate(reversed(timestr.split(':'))))
-
-def _secs2time(seconds):
-    m, s = divmod(seconds, 60)
-    h, m = divmod(m, 60)
-    return "%02d:%02d:%02d" % (h, m, s)
-

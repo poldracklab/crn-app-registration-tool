@@ -1,15 +1,16 @@
 #!/bin/bash
 #
+#------------------Scheduler Options--------------------
+#  SBATCH -N 1                   # Total number of nodes (16 cores/node)
+#  SBATCH -n 16                  # Total number of tasks
 #SBATCH -n {{nodes}}
-#SBATCH -t {{child_runtime}}
-#SBATCH -p {{partition}}
+#SBATCH -t {{child_runtime}}   # Run time (hh:mm:ss)
+#SBATCH -p {{partition}}       # Queue name
 #SBATCH -D {{work_dir}}
+#SBATCH -J {{ jobname |default('openneuro', true) }}
 #SBATCH -o log/bidsapp-%j.out
 #SBATCH -e log/bidsapp-%j.err
 #SBATCH --export=NONE
-{% if job_name %}
-#SBATCH -J {{job_name}}
-{% endif %}
 {% if mincpus %}
 #SBATCH --mincpus={{mincpus}}
 {% endif %}
@@ -19,8 +20,13 @@
 {% if qos %}
 #SBATCH --qos={{qos}}
 {% endif %}
-{% if modules %}{% for m in modules %}
+#
+{% if modules %}
+#
+#------------------Load modules------------------------
+{% for m in modules %}
 {{ m }}
 {% endfor %}{% endif %}
+#
+#------------------Job sumission-----------------------
 {% if srun_cmd %}{{ srun_cmd }} {% endif %}{{commandline}}
-

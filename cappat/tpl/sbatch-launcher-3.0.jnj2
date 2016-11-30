@@ -1,0 +1,21 @@
+#!/bin/bash
+#
+#------------------Scheduler Options--------------------
+#SBATCH -N {{nodes}}           # Total number of nodes
+#SBATCH -n {{ntasks}}          # Total number of tasks
+#SBATCH -t {{child_runtime}}   # Run time (hh:mm:ss)
+#SBATCH -p {{partition}}       # Queue name
+#SBATCH -J {{ jobname |default('openneuro', true) }}
+#SBATCH -o log/bidsapp-%j.out
+#SBATCH -e log/bidsapp-%j.err
+#------------------General Options---------------------
+module load launcher
+export LAUNCHER_PLUGIN_DIR=$LAUNCHER_DIR/plugins
+export LAUNCHER_RMI=SLURM
+export LAUNCHER_JOB_FILE={{task_file}}
+
+{% if modules %}{% for m in modules %}
+{{ m }}
+{% endfor %}{% endif %}
+$LAUNCHER_DIR/paramrun
+

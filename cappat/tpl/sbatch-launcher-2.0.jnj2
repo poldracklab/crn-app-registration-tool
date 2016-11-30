@@ -1,0 +1,71 @@
+#!/bin/bash
+#
+#------------------Scheduler Options--------------------
+#SBATCH -N {{nodes}}           # Total number of nodes
+#SBATCH -n {{ntasks}}          # Total number of tasks
+#SBATCH -t {{child_runtime}}   # Run time (hh:mm:ss)
+#SBATCH -p {{partition}}       # Queue name
+#SBATCH -J {{jobname}}
+#SBATCH -o {{work_dir}}/log/bidsapp-%j.out
+#SBATCH -e {{work_dir}}/log/bidsapp-%j.err
+#------------------General Options---------------------
+module load launcher/2.0
+export EXECUTABLE=$TACC_LAUNCHER_DIR/init_launcher
+export TACC_LAUNCHER_PPN={{ tasks_per_node|default('1', true) }}
+export WORKDIR={{work_dir}}
+export CONTROL_FILE={{tasks_file}}
+mkdir -p $WORKDIR/log/
+
+# Variable descriptions:
+#
+#  TACC_LAUNCHER_PPN = number of simultaneous processes per host
+#                      - if this variable is not set, value is
+#                        determined by the process density/wayness
+#                        specified in 'Scheduler Options'
+#  EXECUTABLE        = full path to the job launcher executable
+#  WORKDIR           = location of working directory
+#  CONTROL_FILE      = text input file which specifies
+#                      executable for each process
+#                      (should be located in WORKDIR)
+#------------------------------------------------------
+
+#------------ Task Scheduling Options -----------------
+export TACC_LAUNCHER_SCHED=dynamic
+
+# Variable descriptions:
+#  TACC_LAUNCHER_SCHED = scheduling method for lines in CONTROL_FILE
+#                        options (k=process, n=num. lines, p=num. procs):
+#                          - interleaved (default): 
+#                              process k executes every k+nth line
+#                          - block:
+#                              process k executes lines [ k(n/p)+1 , (k+1)(n/p) ]
+#                          - dynamic:
+#                              process k executes first available unclaimed line
+#--------------------------------------------------------
+
+#----------------
+# Error Checking
+#----------------
+
+if [ ! -d $WORKDIR ]; then
+	echo "ERROR: unable to change to working directory ($WORKDIR). Job not submitted."
+	exit
+fi
+
+if [ ! -x $EXECUTABLE ]; then
+	echo "ERROR: unable to find launcher executable $EXECUTABLE. Job not submitted."
+	exit
+fi
+
+if [ ! -e $CONTROL_FILE ]; then
+	echo "ERROR: unable to find input control file $CONTROL_FILE. Job not submitted."
+	exit
+fi
+
+#------------------Job sumission-----------------------
+cd $WORKDIR/
+{% if modules %}{% for m in modules %}
+{{ m }}
+{% endfor %}{% endif %}
+$TACC_LAUNCHER_DIR/paramrun SLURM $EXECUTABLE $WORKDIR $CONTROL_FILE $PHI_WORKDIR $PHI_CONTROL_FILE
+echo "INFO: Parameteric Job Complete"

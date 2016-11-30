@@ -40,7 +40,7 @@ echo "  tenant: ${AGAVE_JOB_TENANT}" >> settings.yml
 echo "  submit_time: ${AGAVE_JOB_SUBMIT_TIME}" >> settings.yml
 
 # Ensure we load the module - should be fixed in agave.
-# module load crnenv
+module load crnenv
 cappwrapp settings.yml 2>> log/errors.txt 1>> log/logfile.txt
 wrapper_code=$?
 
