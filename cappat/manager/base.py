@@ -150,13 +150,14 @@ class TaskSubmissionBase(object):
             return True
 
         pending = []
+        sqexp = re.compile(
+            '(?P<jobid>\\d*),(?P<jobstatus>[' + '|'.join(SLURM_WAIT_STATUS) + ']*)')
         statuses = squeue.split('\n')
         for line in statuses:
-            status = line.split(',')
-            if len(status) < 2:
-                JOB_LOG.error('Error parsing squeue output: \n%s\n', line)
-                raise RuntimeError('Error parsing squeue output: {}'.format(
-                    line))
+            status = sqexp.search(line).groups()
+
+            if not status[0] or not status[1]:
+                continue
 
             self._jobs[status[0]] = status[1]
 

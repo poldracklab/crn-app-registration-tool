@@ -3,7 +3,7 @@
 #------------------Scheduler Options--------------------
 #SBATCH -N {{nodes}}           # Total number of nodes
 #SBATCH -n {{ntasks}}          # Total number of tasks
-#SBATCH -t {{child_runtime}}   # Run time (hh:mm:ss)
+#SBATCH -t {{runtime}}   # Run time (hh:mm:ss)
 #SBATCH -p {{partition}}       # Queue name
 #SBATCH -J {{ jobname |default('openneuro', true) }}
 #SBATCH -o log/bidsapp-%j.out
