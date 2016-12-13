@@ -33,6 +33,11 @@ def get_subject_list(bids_dir, participant_label=None, randomize=True):
     if isinstance(participant_label, (str, basestring)):
         participant_label = [s for s in participant_label.strip().split(' ') if s]
 
+    if not isinstance(participant_label, list):
+        participant_label = [participant_label]
+
+    participant_label = ['%s' % label for label in participant_label]
+
     if not participant_label:
         subject_list = all_subjects
     else:
