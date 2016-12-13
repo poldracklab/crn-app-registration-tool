@@ -63,6 +63,14 @@ def get_task_list(bids_dir, app_name, subject_list, group_size=1,
     """
     Generate a list of tasks for launcher or slurm
     """
+    if not isinstance(group_size, int):
+        try:
+            group_size = group_size.strip()
+        except AttributeError:
+            pass  # doesn't look like a string
+
+        group_size = int(group_size)
+
     groups = [sorted(subject_list[i:i+group_size])
               for i in range(0, len(subject_list), group_size)]
 
