@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2016-03-16 11:28:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2016-11-11 11:45:16
+# @Last Modified time: 2016-12-13 10:52:17
 
 """
 Agave app generator
@@ -46,6 +46,7 @@ AGAVE_APP_OPTIONAL = [
     ('tags', []),
     ('modules', []),
     ('inputs', []),
+    ('parallelParticipants', 1),
     ('parameters', [])
 ]
 AGAVE_EXECUTION_SYSTEMS = [

@@ -66,6 +66,10 @@ class TaskSubmissionBase(object):
 
         self._group_cmd = [self._settings['executable'], self._settings['bids_dir'],
                            AGAVE_JOB_OUTPUT, 'group']
+
+        if self._settings.get('participant_label', None):
+            self._group_cmd += [self._settings['participant_label']]
+
         if self._settings.get('group_args'):
             self._group_cmd += [self._settings.get('group_args')]
 

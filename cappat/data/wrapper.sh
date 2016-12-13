@@ -10,7 +10,7 @@ mkdir -p log/ out/
 # Dump all settings to a yml file
 echo "app:" >> settings.yml
 echo "  bids_dir: ${bidsFolder}" >> settings.yml
-echo "  participant_label: ${subjectList}" >> settings.yml
+echo "  participant_label: \"${subjectList}\"" >> settings.yml
 echo "  parallel_npart: ${parallelParticipants}" >> settings.yml
 echo "  executable: ${execPath}" >> settings.yml
 echo "  output_dir: out/" >> settings.yml

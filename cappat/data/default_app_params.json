@@ -42,7 +42,7 @@
     {
       "id": "parallelParticipants",
       "value": {
-        "default": 4,
+        "default": 1,
         "required": true,
         "visible": false,
         "type": "number",
