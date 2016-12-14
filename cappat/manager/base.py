@@ -71,6 +71,7 @@ class TaskSubmissionBase(object):
             part_labels = self._settings['participant_label']
             if not isinstance(part_labels, list):
                 part_labels = [part_labels]
+            self._group_cmd += ['--participant_label']
             self._group_cmd += ['%s' % part for part in part_labels]
 
         if self._settings.get('group_args'):
