@@ -68,7 +68,10 @@ class TaskSubmissionBase(object):
                            AGAVE_JOB_OUTPUT, 'group']
 
         if self._settings.get('participant_label', None):
-            self._group_cmd += [self._settings['participant_label']]
+            part_labels = self._settings['participant_label']
+            if not isinstance(part_labels, list):
+                part_labels = [part_labels]
+            self._group_cmd += ['%s' % part for part in part_labels]
 
         if self._settings.get('group_args'):
             self._group_cmd += [self._settings.get('group_args')]
