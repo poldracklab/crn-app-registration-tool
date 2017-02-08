@@ -3,7 +3,7 @@
 #------------------Scheduler Options--------------------
 #  SBATCH -N 1                   # Total number of nodes (16 cores/node)
 #  SBATCH -n 16                  # Total number of tasks
-#SBATCH -n {{nodes}}
+#SBATCH -N {{nodes}}
 #SBATCH -t {{child_runtime}}   # Run time (hh:mm:ss)
 #SBATCH -p {{partition}}       # Queue name
 #SBATCH -D {{work_dir}}
